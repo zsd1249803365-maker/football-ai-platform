@@ -2,18 +2,21 @@
   {
     "id": "man",
     "league": "英超",
-
     "home": "曼城",
     "away": "利物浦",
 
-    "team_strength": {
+    "strength": {
       "home": 92,
       "away": 88
     },
 
     "form": {
-      "home": "4胜1平",
-      "away": "3胜1平1负"
+      "home": 85,
+      "away": 82,
+      "detail": {
+        "home": "4胜1平",
+        "away": "3胜1平1负"
+      }
     },
 
     "xg": {
@@ -27,16 +30,24 @@
     },
 
     "odds": {
-      "home_win": "1.85",
-      "draw": "3.60",
-      "away_win": "3.90"
+      "home": 1.85,
+      "draw": 3.60,
+      "away": 3.90
     },
 
     "prediction": {
-      "win": "42%",
+      "home_win": "42%",
       "draw": "30%",
-      "lose": "28%",
+      "away_win": "28%",
       "score": "1-1"
+    },
+
+    "ai": {
+      "strength_weight": 30,
+      "form_weight": 20,
+      "xg_weight": 25,
+      "defense_weight": 15,
+      "market_weight": 10
     },
 
     "risk": "中等"
@@ -46,18 +57,21 @@
   {
     "id": "real",
     "league": "西甲",
-
     "home": "皇家马德里",
     "away": "巴塞罗那",
 
-    "team_strength": {
+    "strength": {
       "home": 90,
       "away": 87
     },
 
     "form": {
-      "home": "3胜2平",
-      "away": "4胜1负"
+      "home": 86,
+      "away": 84,
+      "detail": {
+        "home": "3胜2平",
+        "away": "4胜1负"
+      }
     },
 
     "xg": {
@@ -71,16 +85,24 @@
     },
 
     "odds": {
-      "home_win": "2.10",
-      "draw": "3.50",
-      "away_win": "3.20"
+      "home": 2.10,
+      "draw": 3.50,
+      "away": 3.20
     },
 
     "prediction": {
-      "win": "45%",
+      "home_win": "45%",
       "draw": "27%",
-      "lose": "28%",
+      "away_win": "28%",
       "score": "2-1"
+    },
+
+    "ai": {
+      "strength_weight": 30,
+      "form_weight": 20,
+      "xg_weight": 25,
+      "defense_weight": 15,
+      "market_weight": 10
     },
 
     "risk": "较高"
@@ -90,18 +112,21 @@
   {
     "id": "inter",
     "league": "意甲",
-
     "home": "国际米兰",
     "away": "AC米兰",
 
-    "team_strength": {
+    "strength": {
       "home": 86,
       "away": 82
     },
 
     "form": {
-      "home": "4胜1负",
-      "away": "3胜1平1负"
+      "home": 84,
+      "away": 80,
+      "detail": {
+        "home": "4胜1负",
+        "away": "3胜1平1负"
+      }
     },
 
     "xg": {
@@ -115,16 +140,24 @@
     },
 
     "odds": {
-      "home_win": "2.00",
-      "draw": "3.30",
-      "away_win": "3.60"
+      "home": 2.00,
+      "draw": 3.30,
+      "away": 3.60
     },
 
     "prediction": {
-      "win": "38%",
+      "home_win": "38%",
       "draw": "31%",
-      "lose": "31%",
+      "away_win": "31%",
       "score": "1-0"
+    },
+
+    "ai": {
+      "strength_weight": 30,
+      "form_weight": 20,
+      "xg_weight": 25,
+      "defense_weight": 15,
+      "market_weight": 10
     },
 
     "risk": "低"
