@@ -35,7 +35,6 @@
       "away": 3.90
     },
 
-
     "market": {
 
       "asian_handicap": {
@@ -61,7 +60,6 @@
         "draw": 3.55,
         "away": 4.10
       }
-
     },
 
 
@@ -77,12 +75,43 @@
     "ai_market": {
 
       "odds_change": 2,
-
       "heat_risk": -1,
-
       "handicap_support": 2,
-
       "analysis": "盘口支持主队，但存在热门风险"
+
+    },
+
+
+    "injury": {
+
+      "home": {
+
+        "players": [
+          {
+            "name": "主力中场",
+            "position": "MF",
+            "impact": -2
+          }
+        ],
+
+        "totalImpact": -2
+
+      },
+
+
+      "away": {
+
+        "players": [
+          {
+            "name": "替补前锋",
+            "position": "FW",
+            "impact": 0
+          }
+        ],
+
+        "totalImpact": 0
+
+      }
 
     },
 
@@ -180,12 +209,37 @@
     "ai_market": {
 
       "odds_change": 1,
-
       "heat_risk": -2,
-
       "handicap_support": 1,
+      "analysis": "热门压力较大"
 
-      "analysis": "盘口支持有限，热门压力较大"
+    },
+
+
+    "injury": {
+
+      "home": {
+
+        "players": [
+          {
+            "name": "后防主力",
+            "position": "DF",
+            "impact": -2
+          }
+        ],
+
+        "totalImpact": -2
+
+      },
+
+
+      "away": {
+
+        "players": [],
+
+        "totalImpact": 0
+
+      }
 
     },
 
@@ -283,12 +337,37 @@
     "ai_market": {
 
       "odds_change": 1,
-
       "heat_risk": 0,
-
       "handicap_support": 2,
+      "analysis": "盘口与实力一致"
 
-      "analysis": "盘口与实力方向一致"
+    },
+
+
+    "injury": {
+
+      "home": {
+
+        "players": [],
+
+        "totalImpact": 0
+
+      },
+
+
+      "away": {
+
+        "players": [
+          {
+            "name": "主力后卫",
+            "position": "DF",
+            "impact": -3
+          }
+        ],
+
+        "totalImpact": -3
+
+      }
 
     },
 
