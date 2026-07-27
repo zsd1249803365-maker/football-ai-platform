@@ -5,14 +5,14 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Football AI - 比赛分析</title>
+<title>Football AI 分析</title>
 
 <style>
 
 body{
     margin:0;
     padding:20px;
-    font-family:Arial,sans-serif;
+    font-family:Arial;
     background:#f3f4f6;
 }
 
@@ -26,8 +26,8 @@ body{
 
 .card{
     background:white;
-    margin-top:20px;
     padding:20px;
+    margin-top:20px;
     border-radius:18px;
     box-shadow:0 3px 10px #ddd;
 }
@@ -39,26 +39,24 @@ body{
 }
 
 .info{
+    line-height:32px;
     font-size:17px;
-    line-height:35px;
 }
 
-.big{
+.score{
     font-size:28px;
     font-weight:bold;
 }
 
 .back{
-
     display:block;
     margin-top:25px;
-    padding:15px;
     background:#111827;
     color:white;
     text-align:center;
+    padding:15px;
     border-radius:12px;
     text-decoration:none;
-
 }
 
 </style>
@@ -73,7 +71,7 @@ body{
 
 <h1>⚽ Football AI</h1>
 
-<p>智能足球预测分析</p>
+<p>智能足球预测系统</p>
 
 </div>
 
@@ -103,13 +101,10 @@ body{
 </div>
 
 <div class="info" id="strength">
-
 加载中...
-
 </div>
 
 </div>
-
 
 
 
@@ -121,13 +116,10 @@ body{
 </div>
 
 <div class="info" id="form">
-
 加载中...
-
 </div>
 
 </div>
-
 
 
 
@@ -136,17 +128,13 @@ body{
 
 <div class="title">
 📈 xG预期进球
-
 </div>
 
 <div class="info" id="xg">
-
 加载中...
-
 </div>
 
 </div>
-
 
 
 
@@ -155,17 +143,13 @@ body{
 
 <div class="title">
 🛡 防守能力
-
 </div>
 
 <div class="info" id="defense">
-
 加载中...
-
 </div>
 
 </div>
-
 
 
 
@@ -173,18 +157,14 @@ body{
 <div class="card">
 
 <div class="title">
-💰 赔率分析
-
+💰 赔率
 </div>
 
 <div class="info" id="odds">
-
 加载中...
-
 </div>
 
 </div>
-
 
 
 
@@ -193,17 +173,13 @@ body{
 
 <div class="title">
 🤖 AI预测
-
 </div>
 
 <div class="info" id="prediction">
-
 加载中...
-
 </div>
 
 </div>
-
 
 
 
@@ -212,27 +188,20 @@ body{
 
 <div class="title">
 ⚠️ 风险等级
-
 </div>
 
-<div class="big" id="risk">
-
+<div class="score" id="risk">
 加载中...
-
 </div>
 
 </div>
-
 
 
 
 
 <a class="back" href="matches.html">
-
 返回比赛列表
-
 </a>
-
 
 
 
@@ -249,7 +218,7 @@ let game = params.get("game");
 
 fetch("matches.json")
 
-.then(response => response.json())
+.then(res => res.json())
 
 .then(data => {
 
@@ -272,60 +241,50 @@ match.league;
 
 
 document.getElementById("strength").innerHTML =
-
-match.home + "：" + match.team_strength.home +
+match.home + "：" + match.strength.home +
 "<br>" +
-
-match.away + "：" + match.team_strength.away;
+match.away + "：" + match.strength.away;
 
 
 
 document.getElementById("form").innerHTML =
-
-match.home + "：" + match.form.home +
+match.home + "：" + match.form.detail.home +
 "<br>" +
-
-match.away + "：" + match.form.away;
+match.away + "：" + match.form.detail.away;
 
 
 
 document.getElementById("xg").innerHTML =
-
-match.home + " xG：" + match.xg.home +
+match.home + "：" + match.xg.home +
 "<br>" +
-
-match.away + " xG：" + match.xg.away;
+match.away + "：" + match.xg.away;
 
 
 
 document.getElementById("defense").innerHTML =
-
 match.home + "：" + match.defense.home +
 "<br>" +
-
 match.away + "：" + match.defense.away;
 
 
 
 document.getElementById("odds").innerHTML =
-
-"主胜：" + match.odds.home_win +
+"主胜：" + match.odds.home +
 "<br>平：" + match.odds.draw +
-"<br>客胜：" + match.odds.away_win;
+"<br>客胜：" + match.odds.away;
 
 
 
 document.getElementById("prediction").innerHTML =
 
-"胜：" + match.prediction.win +
-"<br>平：" + match.prediction.draw +
-"<br>负：" + match.prediction.lose +
+"主胜概率：" + match.prediction.home_win +
+"<br>平局概率：" + match.prediction.draw +
+"<br>客胜概率：" + match.prediction.away_win +
 "<br>预测比分：" + match.prediction.score;
 
 
 
 document.getElementById("risk").innerHTML =
-
 match.risk;
 
 
@@ -334,11 +293,12 @@ match.risk;
 
 else{
 
+
 document.getElementById("matchName").innerHTML =
-"没有找到比赛";
+"未找到比赛";
+
 
 }
-
 
 
 });
