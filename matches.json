@@ -67,15 +67,22 @@
 
     "market_analysis": {
 
-      "home_change": "下降",
-
-      "away_change": "上升",
-
       "trend": "主队方向增强",
-
       "heat": "中",
+      "risk_note": "主队热度增加，需要防平"
 
-      "risk_note": "主队热度增加，需要防平局"
+    },
+
+
+    "ai_market": {
+
+      "odds_change": 2,
+
+      "heat_risk": -1,
+
+      "handicap_support": 2,
+
+      "analysis": "盘口支持主队，但存在热门风险"
 
     },
 
@@ -97,19 +104,14 @@
 
   {
     "id": "real",
-
     "league": "西甲",
-
     "home": "皇家马德里",
-
     "away": "巴塞罗那",
-
 
     "strength": {
       "home": 90,
       "away": 87
     },
-
 
     "form": {
       "home": 86,
@@ -120,18 +122,15 @@
       }
     },
 
-
     "xg": {
       "home": 1.95,
       "away": 1.68
     },
 
-
     "defense": {
       "home": 89,
       "away": 85
     },
-
 
     "odds": {
       "home": 2.10,
@@ -171,15 +170,22 @@
 
     "market_analysis": {
 
-      "home_change": "下降",
-
-      "away_change": "上升",
-
       "trend": "皇马支持增强",
-
       "heat": "高",
+      "risk_note": "强队热门，防让胜失败"
 
-      "risk_note": "强队热门，存在让胜风险"
+    },
+
+
+    "ai_market": {
+
+      "odds_change": 1,
+
+      "heat_risk": -2,
+
+      "handicap_support": 1,
+
+      "analysis": "盘口支持有限，热门压力较大"
 
     },
 
@@ -201,19 +207,14 @@
 
   {
     "id": "inter",
-
     "league": "意甲",
-
     "home": "国际米兰",
-
     "away": "AC米兰",
-
 
     "strength": {
       "home": 86,
       "away": 82
     },
-
 
     "form": {
       "home": 84,
@@ -224,18 +225,15 @@
       }
     },
 
-
     "xg": {
       "home": 1.80,
       "away": 1.20
     },
 
-
     "defense": {
       "home": 91,
       "away": 84
     },
-
 
     "odds": {
       "home": 2.00,
@@ -275,15 +273,22 @@
 
     "market_analysis": {
 
-      "home_change": "下降",
-
-      "away_change": "上升",
-
       "trend": "国米方向增强",
-
       "heat": "低",
+      "risk_note": "盘口稳定"
 
-      "risk_note": "盘口稳定，冷门概率较低"
+    },
+
+
+    "ai_market": {
+
+      "odds_change": 1,
+
+      "heat_risk": 0,
+
+      "handicap_support": 2,
+
+      "analysis": "盘口与实力方向一致"
 
     },
 
