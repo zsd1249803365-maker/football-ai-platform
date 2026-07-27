@@ -76,7 +76,6 @@ text-decoration:none;
 </div>
 
 
-
 <div class="card">
 <div class="title">比赛</div>
 <h2 id="matchName">加载中...</h2>
@@ -87,112 +86,103 @@ text-decoration:none;
 
 <div class="card">
 <div class="title">🔥 球队实力</div>
-<div class="info" id="strength"></div>
+<div id="strength" class="info"></div>
 </div>
-
 
 
 <div class="card">
-<div class="title">📊 近期状态</div>
-<div class="info" id="form"></div>
+<div class="title">📊 状态</div>
+<div id="form" class="info"></div>
 </div>
-
 
 
 <div class="card">
-<div class="title">📈 xG数据</div>
-<div class="info" id="xg"></div>
+<div class="title">📈 xG</div>
+<div id="xg" class="info"></div>
 </div>
-
 
 
 <div class="card">
-<div class="title">🛡 防守能力</div>
-<div class="info" id="defense"></div>
+<div class="title">🛡 防守</div>
+<div id="defense" class="info"></div>
 </div>
-
 
 
 <div class="card">
-<div class="title">💰 欧赔数据</div>
-<div class="info" id="odds"></div>
+<div class="title">💰 欧赔</div>
+<div id="odds" class="info"></div>
 </div>
-
 
 
 <div class="card">
 <div class="title">⚽ 竞彩盘口</div>
-<div class="info" id="market"></div>
+<div id="market" class="info"></div>
 </div>
-
 
 
 <div class="card">
 <div class="title">📉 盘口走势</div>
-<div class="info" id="marketAnalysis"></div>
+<div id="marketAnalysis" class="info"></div>
 </div>
-
 
 
 <div class="card">
 <div class="title">🤖 AI盘口修正</div>
-<div class="info" id="aiMarket"></div>
+<div id="aiMarket" class="info"></div>
 </div>
-
 
 
 <div class="card">
-<div class="title">🚑 伤停影响分析</div>
-<div class="info" id="injury"></div>
+<div class="title">🚑 伤停影响</div>
+<div id="injury" class="info"></div>
 </div>
-
 
 
 <div class="card">
 <div class="title">🔥 战意分析</div>
-<div class="info" id="motivation"></div>
+<div id="motivation" class="info"></div>
 </div>
-
 
 
 <div class="card">
 <div class="title">⏱ 赛程消耗</div>
-<div class="info" id="schedule"></div>
+<div id="schedule" class="info"></div>
 </div>
-
 
 
 <div class="card">
 <div class="title">🔄 轮换风险</div>
-<div class="info" id="rotation"></div>
+<div id="rotation" class="info"></div>
 </div>
-
 
 
 <div class="card">
-<div class="title">🎯 风格对抗分析</div>
-<div class="info" id="styleMatch"></div>
+<div class="title">🎯 风格对抗</div>
+<div id="styleMatch" class="info"></div>
 </div>
 
+
+<div class="card">
+<div class="title">💰 市场资金分析</div>
+<div id="marketLogic" class="info"></div>
+</div>
 
 
 <div class="card">
 <div class="title">🤖 AI综合评分</div>
-<div class="score" id="aiScore"></div>
+<div id="aiScore" class="score"></div>
 </div>
-
 
 
 <div class="card">
-<div class="title">📊 AI概率模型</div>
-<div class="info" id="probability"></div>
+<div class="title">📊 胜平负概率</div>
+<div id="probability" class="info"></div>
 </div>
-
 
 
 <div class="card">
 <div class="title">⚠️ 风险等级</div>
-<div class="score" id="risk"></div>
+<div id="risk" class="score"></div>
 </div>
 
 
@@ -204,6 +194,7 @@ text-decoration:none;
 
 
 <script>
+
 
 let params=new URLSearchParams(window.location.search);
 
@@ -335,7 +326,6 @@ showInjury(match.injury.away);
 
 
 document.getElementById("motivation").innerHTML=
-
 match.home+
 "："+
 match.motivation.level+
@@ -346,51 +336,53 @@ match.motivation.impact+
 
 
 document.getElementById("schedule").innerHTML=
-
 "最近比赛："+
 match.schedule.recent_match+
-"<br>"+
-"疲劳影响："+match.schedule.fatigue;
+"<br>疲劳影响："+
+match.schedule.fatigue;
 
 
 
 document.getElementById("rotation").innerHTML=
-
 "风险："+
 match.rotation.risk+
-"<br>"+
-"影响："+match.rotation.impact;
+"<br>影响："+
+match.rotation.impact;
 
 
 
 document.getElementById("styleMatch").innerHTML=
-
-match.home+
-"打法："+match.style_match.home_style+
+match.home+"："+match.style_match.home_style+
 "<br>"+
-match.away+
-"打法："+match.style_match.away_style+
+match.away+"："+match.style_match.away_style+
 "<br><br>"+
-"风格分析："+
 match.style_match.matchup+
+"<br>AI修正："+match.style_match.impact;
+
+
+
+document.getElementById("marketLogic").innerHTML=
+
+"热门方向："+
+match.market_logic.popular_side+
 "<br>"+
-"AI风格修正："+match.style_match.impact;
+"冷门方向："+
+match.market_logic.cold_side+
+"<br>"+
+"庄家信号："+
+match.market_logic.bookmaker_signal+
+"<br>"+
+"AI市场修正："+match.market_logic.impact;
 
 
 
-let baseScore=
+let score=
 
 80+
 (match.strength.home-match.strength.away)*0.3+
 (match.form.home-match.form.away)*0.2+
 (match.xg.home-match.xg.away)*10+
-(match.defense.home-match.defense.away)*0.15;
-
-
-
-let finalScore=
-
-baseScore+
+(match.defense.home-match.defense.away)*0.15+
 match.ai_market.odds_change+
 match.ai_market.handicap_support+
 match.ai_market.heat_risk+
@@ -398,26 +390,26 @@ match.injury.home.totalImpact+
 match.motivation.impact+
 match.schedule.fatigue+
 match.rotation.impact+
-match.style_match.impact;
+match.style_match.impact+
+match.market_logic.impact;
 
 
 
 let awayScore=
-
-160-finalScore+
+160-score+
 match.injury.away.totalImpact;
 
 
 
 document.getElementById("aiScore").innerHTML=
 
-match.home+"："+finalScore.toFixed(1)+
+match.home+"："+score.toFixed(1)+
 "<br>"+
 match.away+"："+awayScore.toFixed(1);
 
 
 
-let diff=finalScore-awayScore;
+let diff=score-awayScore;
 
 
 let homeProb=33+diff*1.5;
