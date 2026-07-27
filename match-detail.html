@@ -49,16 +49,14 @@ body{
 }
 
 .back{
-
     display:block;
     margin-top:25px;
+    padding:15px;
     background:#111827;
     color:white;
-    padding:15px;
     text-align:center;
     border-radius:12px;
     text-decoration:none;
-
 }
 
 </style>
@@ -73,22 +71,17 @@ body{
 
 <h1>⚽ Football AI</h1>
 
-<p>AI足球预测分析系统</p>
+<p>智能足球预测系统</p>
 
 </div>
-
 
 
 
 <div class="card">
 
-<div class="title">
-比赛
-</div>
+<div class="title">比赛</div>
 
-<h2 id="matchName">
-加载中...
-</h2>
+<h2 id="matchName">加载中...</h2>
 
 <p id="league"></p>
 
@@ -96,143 +89,99 @@ body{
 
 
 
-
-
 <div class="card">
 
-<div class="title">
-🔥 球队实力
-</div>
+<div class="title">🔥 球队实力</div>
 
-<div class="info" id="strength">
-加载中...
-</div>
+<div class="info" id="strength"></div>
 
 </div>
-
-
 
 
 
 <div class="card">
 
-<div class="title">
-📊 近期状态
-</div>
+<div class="title">📊 近期状态</div>
 
-<div class="info" id="form">
-加载中...
-</div>
+<div class="info" id="form"></div>
 
 </div>
-
-
 
 
 
 <div class="card">
 
-<div class="title">
-📈 xG数据
-</div>
+<div class="title">📈 xG数据</div>
 
-<div class="info" id="xg">
-加载中...
-</div>
+<div class="info" id="xg"></div>
 
 </div>
-
-
 
 
 
 <div class="card">
 
-<div class="title">
-🛡 防守能力
-</div>
+<div class="title">🛡 防守能力</div>
 
-<div class="info" id="defense">
-加载中...
-</div>
+<div class="info" id="defense"></div>
 
 </div>
-
-
 
 
 
 <div class="card">
 
-<div class="title">
-💰 盘口赔率
-</div>
+<div class="title">💰 赔率</div>
 
-<div class="info" id="odds">
-加载中...
-</div>
+<div class="info" id="odds"></div>
 
 </div>
-
-
 
 
 
 <div class="card">
 
-<div class="title">
-🤖 AI综合评分
-</div>
+<div class="title">🤖 AI综合评分</div>
 
-<div class="info" id="aiScore">
-计算中...
-</div>
+<div class="score" id="aiScore"></div>
 
 </div>
-
-
 
 
 
 <div class="card">
 
-<div class="title">
-🎯 AI预测
-</div>
+<div class="title">📊 AI概率模型</div>
 
-<div class="info" id="prediction">
-加载中...
-</div>
+<div class="info" id="probability"></div>
 
 </div>
-
-
 
 
 
 <div class="card">
 
-<div class="title">
-⚠️ 风险等级
-</div>
+<div class="title">🎯 预测结果</div>
 
-<div class="score" id="risk">
-加载中...
-</div>
+<div class="info" id="prediction"></div>
 
 </div>
 
 
+
+<div class="card">
+
+<div class="title">⚠️ 风险等级</div>
+
+<div class="score" id="risk"></div>
+
+</div>
 
 
 
 <a class="back" href="matches.html">
-
 返回比赛列表
-
 </a>
-
-
 
 
 
@@ -248,12 +197,12 @@ let game = params.get("game");
 
 fetch("matches.json")
 
-.then(res => res.json())
+.then(res=>res.json())
 
-.then(data => {
+.then(data=>{
 
 
-let match = data.find(item => item.id == game);
+let match=data.find(item=>item.id==game);
 
 
 
@@ -261,7 +210,7 @@ if(match){
 
 
 document.getElementById("matchName").innerHTML =
-match.home + " VS " + match.away;
+match.home+" VS "+match.away;
 
 
 document.getElementById("league").innerHTML =
@@ -269,121 +218,112 @@ match.league;
 
 
 
-
 document.getElementById("strength").innerHTML =
-
-match.home + "：" + match.strength.home +
-"<br>" +
-match.away + "：" + match.strength.away;
+match.home+"："+match.strength.home+
+"<br>"+
+match.away+"："+match.strength.away;
 
 
 
 document.getElementById("form").innerHTML =
-
-match.home + "：" + match.form.detail.home +
-"<br>" +
-match.away + "：" + match.form.detail.away;
+match.home+"："+match.form.detail.home+
+"<br>"+
+match.away+"："+match.form.detail.away;
 
 
 
 document.getElementById("xg").innerHTML =
-
-match.home + "：" + match.xg.home +
-"<br>" +
-match.away + "：" + match.xg.away;
+match.home+"："+match.xg.home+
+"<br>"+
+match.away+"："+match.xg.away;
 
 
 
 document.getElementById("defense").innerHTML =
-
-match.home + "：" + match.defense.home +
-"<br>" +
-match.away + "：" + match.defense.away;
+match.home+"："+match.defense.home+
+"<br>"+
+match.away+"："+match.defense.away;
 
 
 
 document.getElementById("odds").innerHTML =
-
-"主胜：" + match.odds.home +
-"<br>平：" + match.odds.draw +
-"<br>客胜：" + match.odds.away;
-
+"主胜："+match.odds.home+
+"<br>平："+match.odds.draw+
+"<br>客胜："+match.odds.away;
 
 
 
-// AI评分计算
 
-
-let strength =
-(match.strength.home - match.strength.away) * 0.3;
-
-
-let form =
-(match.form.home - match.form.away) * 0.2;
-
-
-let xg =
-(match.xg.home - match.xg.away) * 10;
-
-
-let defense =
-(match.defense.home - match.defense.away) * 0.15;
-
-
-let market =
-(match.odds.away - match.odds.home) * 2;
-
-
+// AI评分
 
 let homeScore =
-80 +
-strength +
-form +
-xg +
-defense +
-market;
+80+
+(match.strength.home-match.strength.away)*0.3+
+(match.form.home-match.form.away)*0.2+
+(match.xg.home-match.xg.away)*10+
+(match.defense.home-match.defense.away)*0.15;
 
 
-
-let awayScore =
-100 - homeScore;
-
-
-
-if(awayScore < 50){
-
-awayScore = 50;
-
-}
+let awayScore = 160-homeScore;
 
 
 
 document.getElementById("aiScore").innerHTML =
 
-match.home + " AI评分：" +
-homeScore.toFixed(1) +
-
-"<br>" +
-
-match.away + " AI评分：" +
-awayScore.toFixed(1) +
-
-"<br><br>" +
-
-"AI倾向：" +
-
-(match.home + " 方向");
+match.home+"："+homeScore.toFixed(1)+
+"<br>"+
+match.away+"："+awayScore.toFixed(1);
 
 
 
 
+// 概率模型
 
-document.getElementById("prediction").innerHTML =
+let diff=homeScore-awayScore;
 
-"主胜：" + match.prediction.home_win +
-"<br>平：" + match.prediction.draw +
-"<br>客胜：" + match.prediction.away_win +
-"<br>预测比分：" + match.prediction.score;
+
+let homeProb=33+diff*1.5;
+
+let awayProb=33-diff*1.2;
+
+let drawProb=100-homeProb-awayProb;
+
+
+homeProb=Math.max(15,Math.min(70,homeProb));
+
+awayProb=Math.max(15,Math.min(70,awayProb));
+
+drawProb=100-homeProb-awayProb;
+
+
+
+let confidence="低";
+
+
+if(Math.abs(diff)>15){
+confidence="高";
+}
+else if(Math.abs(diff)>8){
+confidence="中";
+}
+
+
+
+document.getElementById("probability").innerHTML=
+
+"主胜："+homeProb.toFixed(1)+"%"+
+"<br>平："+drawProb.toFixed(1)+"%"+
+"<br>客胜："+awayProb.toFixed(1)+"%"+
+"<br><br>模型信心："+confidence;
+
+
+
+document.getElementById("prediction").innerHTML=
+
+"主胜："+match.prediction.home_win+
+"<br>平："+match.prediction.draw+
+"<br>客胜："+match.prediction.away_win+
+"<br>预测比分："+match.prediction.score;
 
 
 
@@ -394,17 +334,8 @@ match.risk;
 
 }
 
-else{
-
-document.getElementById("matchName").innerHTML =
-"未找到比赛";
-
-}
-
-
 
 });
-
 
 </script>
 
