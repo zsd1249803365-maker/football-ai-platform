@@ -78,15 +78,10 @@ text-decoration:none;
 
 
 <div class="card">
-
 <div class="title">比赛</div>
-
 <h2 id="matchName">加载中...</h2>
-
 <p id="league"></p>
-
 </div>
-
 
 
 
@@ -96,10 +91,12 @@ text-decoration:none;
 </div>
 
 
+
 <div class="card">
 <div class="title">📊 近期状态</div>
 <div class="info" id="form"></div>
 </div>
+
 
 
 <div class="card">
@@ -108,10 +105,12 @@ text-decoration:none;
 </div>
 
 
+
 <div class="card">
 <div class="title">🛡 防守能力</div>
 <div class="info" id="defense"></div>
 </div>
+
 
 
 <div class="card">
@@ -142,6 +141,12 @@ text-decoration:none;
 
 
 
+<div class="card">
+<div class="title">🚑 伤停影响分析</div>
+<div class="info" id="injury"></div>
+</div>
+
+
 
 <div class="card">
 <div class="title">🤖 AI综合评分</div>
@@ -150,12 +155,10 @@ text-decoration:none;
 
 
 
-
 <div class="card">
 <div class="title">📊 AI概率模型</div>
 <div class="info" id="probability"></div>
 </div>
-
 
 
 
@@ -169,7 +172,6 @@ text-decoration:none;
 <a class="back" href="matches.html">
 返回比赛列表
 </a>
-
 
 
 
@@ -234,7 +236,6 @@ match.away+"："+match.defense.away;
 
 
 document.getElementById("odds").innerHTML=
-
 "主胜："+match.odds.home+
 "<br>平："+match.odds.draw+
 "<br>客胜："+match.odds.away;
@@ -242,53 +243,81 @@ document.getElementById("odds").innerHTML=
 
 
 document.getElementById("market").innerHTML=
-
 "让球："+match.market.asian_handicap.line+
 "<br>"+
 "主队："+match.market.asian_handicap.home+
 "<br>"+
 "客队："+match.market.asian_handicap.away+
 "<br><br>"+
-"大小球："+match.market.goal.line+
-"<br>"+
-"大："+match.market.goal.over+
-"<br>"+
-"小："+match.market.goal.under;
+"大小球："+match.market.goal.line;
 
 
 
 document.getElementById("marketAnalysis").innerHTML=
-
 "走势："+match.market_analysis.trend+
 "<br>"+
 "热度："+match.market_analysis.heat+
 "<br>"+
-"风险提示："+match.market_analysis.risk_note;
-
-
-
-// AI盘口修正
-
-let oddsChange=
-match.ai_market.odds_change;
-
-let heatRisk=
-match.ai_market.heat_risk;
-
-let handicapSupport=
-match.ai_market.handicap_support;
+"风险："+match.market_analysis.risk_note;
 
 
 
 document.getElementById("aiMarket").innerHTML=
-
-"赔率变化影响："+oddsChange+
+"赔率影响："+match.ai_market.odds_change+
 "<br>"+
-"热门风险："+heatRisk+
+"热门风险："+match.ai_market.heat_risk+
 "<br>"+
-"盘口支持："+handicapSupport+
+"盘口支持："+match.ai_market.handicap_support+
 "<br><br>"+
 match.ai_market.analysis;
+
+
+
+// 伤停显示
+
+function showInjury(team){
+
+let result="";
+
+
+if(team.players.length==0){
+
+return "无重要伤停";
+
+}
+
+
+team.players.forEach(function(player){
+
+result +=
+player.name+
+"（"+player.position+"）"+
+" 影响："+player.impact+
+"<br>";
+
+});
+
+
+result +=
+"总影响："+team.totalImpact;
+
+
+return result;
+
+}
+
+
+
+document.getElementById("injury").innerHTML=
+
+match.home+"：<br>"+
+showInjury(match.injury.home)+
+
+"<br><br>"+
+
+match.away+"：<br>"+
+showInjury(match.injury.away);
+
 
 
 
@@ -303,16 +332,20 @@ let baseScore=
 (match.defense.home-match.defense.away)*0.15;
 
 
-
 let finalScore=
+
 baseScore+
-oddsChange+
-handicapSupport+
-heatRisk;
+match.ai_market.odds_change+
+match.ai_market.handicap_support+
+match.ai_market.heat_risk+
+match.injury.home.totalImpact;
 
 
 
-let awayScore=160-finalScore;
+let awayScore=
+
+160-finalScore+
+match.injury.away.totalImpact;
 
 
 
@@ -325,8 +358,6 @@ match.away+"："+awayScore.toFixed(1);
 
 
 
-
-// 概率
 
 let diff=finalScore-awayScore;
 
@@ -351,6 +382,7 @@ document.getElementById("probability").innerHTML=
 
 document.getElementById("risk").innerHTML=
 match.risk;
+
 
 
 }
