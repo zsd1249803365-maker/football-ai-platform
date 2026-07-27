@@ -1,127 +1,146 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Football AI</title>
 
+
 <style>
 
 body{
-    margin:0;
-    padding:20px;
-    font-family:Arial, sans-serif;
-    background:#f4f6f8;
+
+margin:0;
+padding:20px;
+font-family:Arial,sans-serif;
+background:#f3f4f6;
+
 }
+
 
 .header{
-    text-align:center;
-    background:#111827;
-    color:white;
-    padding:25px;
-    border-radius:20px;
+
+background:#111827;
+color:white;
+padding:30px;
+border-radius:20px;
+text-align:center;
+
 }
 
-.nav{
-    margin-top:15px;
-    text-align:center;
-    color:#555;
-}
+
 
 .card{
-    background:white;
-    margin-top:20px;
-    padding:20px;
-    border-radius:18px;
-    box-shadow:0 4px 12px #ddd;
+
+background:white;
+margin-top:20px;
+padding:22px;
+border-radius:18px;
+box-shadow:0 4px 12px #ddd;
+
 }
+
+
 
 .title{
-    font-size:22px;
-    font-weight:bold;
-    margin-bottom:15px;
+
+font-size:22px;
+font-weight:bold;
+margin-bottom:15px;
+
 }
 
-.match{
-    font-size:20px;
-    font-weight:bold;
+
+
+.btn{
+
+display:block;
+padding:15px;
+margin-top:12px;
+border-radius:12px;
+text-align:center;
+color:white;
+text-decoration:none;
+font-size:18px;
+
 }
 
-.percent{
-    font-size:18px;
-    line-height:32px;
+
+
+.blue{
+
+background:#2563eb;
+
 }
+
+
+
+.green{
+
+background:#16a34a;
+
+}
+
+
+
+.orange{
+
+background:#ea580c;
+
+}
+
+
+
+.info{
+
+font-size:17px;
+line-height:32px;
+
+}
+
+
 
 .tag{
-    display:inline-block;
-    background:#eee;
-    padding:8px 12px;
-    border-radius:20px;
-    margin:5px;
+
+display:inline-block;
+background:#eee;
+padding:8px 12px;
+border-radius:20px;
+margin:5px;
+
 }
 
-.score{
-    font-size:24px;
-    font-weight:bold;
-}
+
 
 .footer{
-    text-align:center;
-    margin-top:30px;
-    color:#777;
+
+text-align:center;
+margin-top:30px;
+color:#777;
+
 }
+
 
 </style>
 
+
 </head>
+
 
 
 <body>
 
 
+
 <div class="header">
+
 
 <h1>⚽ Football AI</h1>
 
-<p>智能足球预测分析平台</p>
 
-</div>
-
-
-<div class="nav">
-
-首页　赛事　模型　回测
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-🔥 今日精选赛事
-</div>
-
-
-<div class="match">
-英超
-</div>
-
-<p>
-曼城 VS 利物浦
-</p>
-
-
-<div class="percent">
-
-主胜：42%<br>
-
-平局：30%<br>
-
-客胜：28%
-
-</div>
+<p>竞彩智能分析系统 v3.6</p>
 
 
 </div>
@@ -132,29 +151,42 @@ body{
 
 <div class="card">
 
+
 <div class="title">
-🎯 AI比分预测
+
+🚀 系统入口
+
+</div>
+
+
+
+<a class="btn blue" href="matches.html">
+
+⚽ 比赛列表
+
+</a>
+
+
+
+<a class="btn green" href="ai-ranking.html">
+
+📊 AI排行榜
+
+</a>
+
+
+
+<a class="btn orange" href="ai-bet.html">
+
+🎫 竞彩方案
+
+</a>
+
+
+
 </div>
 
 
-<p class="score">
-
-1-1
-
-</p>
-
-
-<p>
-
-次选比分：
-
-2-1<br>
-1-0
-
-</p>
-
-
-</div>
 
 
 
@@ -162,21 +194,54 @@ body{
 
 <div class="card">
 
+
 <div class="title">
-📊 AI模型分析
+
+📈 系统状态
+
+</div>
+
+
+
+<div class="info">
+
+
+当前版本：
+
+Football AI v3.6
+
+
+<br>
+
+
+AI模型：
+
+综合盘口分析模型
+
+
+<br>
+
+
+分析维度：
+
+xG / 状态 / 伤停 / 盘口 / 市场
+
+
+<br>
+
+
+数据状态：
+
+正常运行
+
+
 </div>
 
 
-<span class="tag">xG数据</span>
-
-<span class="tag">球队状态</span>
-
-<span class="tag">伤停分析</span>
-
-<span class="tag">盘口变化</span>
-
 
 </div>
+
+
 
 
 
@@ -184,33 +249,60 @@ body{
 
 <div class="card">
 
+
 <div class="title">
-🤖 AI综合评分
+
+🤖 AI分析能力
+
+</div>
+
+
+<span class="tag">
+
+xG数据
+
+</span>
+
+
+<span class="tag">
+
+球队状态
+
+</span>
+
+
+<span class="tag">
+
+伤停分析
+
+</span>
+
+
+<span class="tag">
+
+欧赔分析
+
+</span>
+
+
+<span class="tag">
+
+竞彩盘口
+
+</span>
+
+
+<span class="tag">
+
+市场风险
+
+</span>
+
+
+
 </div>
 
 
-<p>
-
-攻击力 ⭐⭐⭐⭐⭐
-
-</p>
-
-<p>
-
-防守力 ⭐⭐⭐⭐
-
-</p>
-
-<p>
-
-综合评分：
-
-86 / 100
-
-</p>
-
-
-</div>
 
 
 
@@ -218,37 +310,61 @@ body{
 
 <div class="card">
 
+
 <div class="title">
+
 ⚠ 风险提示
+
+</div>
+
+
+<div class="info">
+
+
+AI预测仅作为分析参考。
+
+
+<br>
+
+
+重点关注：
+
+<br>
+
+- 临场阵容变化
+
+<br>
+
+- 盘口水位调整
+
+<br>
+
+- 热门方向风险
+
+<br>
+
+- 冷门爆发可能
+
+
 </div>
 
 
-<p>
-
-中等风险
-
-</p>
-
-<p>
-
-- 关注主力阵容变化<br>
-- 注意盘口临场调整<br>
-- 防范爆冷可能
-
-</p>
-
-
 </div>
+
+
+
 
 
 
 <div class="footer">
 
-Football AI v1.1
+Football AI v3.6
 
 </div>
 
 
+
 </body>
+
 
 </html>
