@@ -1,38 +1,77 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Football AI</title>
 
 <style>
+
 body{
-font-family:Arial;
-background:#f3f5f7;
-padding:20px;
+    margin:0;
+    padding:20px;
+    font-family:Arial, sans-serif;
+    background:#f4f6f8;
 }
 
-h1{
-text-align:center;
+.header{
+    text-align:center;
+    background:#111827;
+    color:white;
+    padding:25px;
+    border-radius:20px;
+}
+
+.nav{
+    margin-top:15px;
+    text-align:center;
+    color:#555;
 }
 
 .card{
-background:white;
-padding:20px;
-margin:15px 0;
-border-radius:15px;
-box-shadow:0 3px 10px #ddd;
+    background:white;
+    margin-top:20px;
+    padding:20px;
+    border-radius:18px;
+    box-shadow:0 4px 12px #ddd;
 }
 
 .title{
-font-size:22px;
-font-weight:bold;
+    font-size:22px;
+    font-weight:bold;
+    margin-bottom:15px;
 }
 
-.number{
-font-size:18px;
-line-height:30px;
+.match{
+    font-size:20px;
+    font-weight:bold;
 }
+
+.percent{
+    font-size:18px;
+    line-height:32px;
+}
+
+.tag{
+    display:inline-block;
+    background:#eee;
+    padding:8px 12px;
+    border-radius:20px;
+    margin:5px;
+}
+
+.score{
+    font-size:24px;
+    font-weight:bold;
+}
+
+.footer{
+    text-align:center;
+    margin-top:30px;
+    color:#777;
+}
+
 </style>
 
 </head>
@@ -41,34 +80,40 @@ line-height:30px;
 <body>
 
 
+<div class="header">
+
 <h1>⚽ Football AI</h1>
+
+<p>智能足球预测分析平台</p>
+
+</div>
+
+
+<div class="nav">
+
+首页　赛事　模型　回测
+
+</div>
+
 
 
 <div class="card">
 
 <div class="title">
-🔥 今日AI预测
+🔥 今日精选赛事
 </div>
 
-<p>
+
+<div class="match">
 英超
-</p>
+</div>
 
 <p>
 曼城 VS 利物浦
 </p>
 
-</div>
 
-
-
-<div class="card">
-
-<div class="title">
-胜平负概率
-</div>
-
-<div class="number">
+<div class="percent">
 
 主胜：42%<br>
 
@@ -78,7 +123,39 @@ line-height:30px;
 
 </div>
 
+
 </div>
+
+
+
+
+
+<div class="card">
+
+<div class="title">
+🎯 AI比分预测
+</div>
+
+
+<p class="score">
+
+1-1
+
+</p>
+
+
+<p>
+
+次选比分：
+
+2-1<br>
+1-0
+
+</p>
+
+
+</div>
+
 
 
 
@@ -89,14 +166,18 @@ line-height:30px;
 📊 AI模型分析
 </div>
 
-<p>
-✅ xG数据<br>
-✅ 球队状态<br>
-✅ 伤停情况<br>
-✅ 盘口变化
-</p>
+
+<span class="tag">xG数据</span>
+
+<span class="tag">球队状态</span>
+
+<span class="tag">伤停分析</span>
+
+<span class="tag">盘口变化</span>
+
 
 </div>
+
 
 
 
@@ -104,18 +185,70 @@ line-height:30px;
 <div class="card">
 
 <div class="title">
-🎯 推荐比分
+🤖 AI综合评分
 </div>
+
 
 <p>
-1-1<br>
-2-1<br>
-1-0
+
+攻击力 ⭐⭐⭐⭐⭐
+
 </p>
+
+<p>
+
+防守力 ⭐⭐⭐⭐
+
+</p>
+
+<p>
+
+综合评分：
+
+86 / 100
+
+</p>
+
 
 </div>
 
+
+
+
+
+<div class="card">
+
+<div class="title">
+⚠ 风险提示
+</div>
+
+
+<p>
+
+中等风险
+
+</p>
+
+<p>
+
+- 关注主力阵容变化<br>
+- 注意盘口临场调整<br>
+- 防范爆冷可能
+
+</p>
+
+
+</div>
+
+
+
+<div class="footer">
+
+Football AI v1.1
+
+</div>
 
 
 </body>
+
 </html>
