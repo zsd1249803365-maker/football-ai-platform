@@ -227,14 +227,55 @@ let params = new URLSearchParams(window.location.search);
 
 let game = params.get("game");
 
-let matchName = document.getElementById("matchName");
+
+fetch("matches.json")
+.then(response => response.json())
+.then(data => {
 
 
-if(game=="man"){
+let match = data.find(item => item.id == game);
 
-    matchName.innerHTML="曼城 VS 利物浦";
+
+if(match){
+
+
+document.getElementById("matchName").innerHTML =
+match.home + " VS " + match.away;
+
+
+document.getElementById("league").innerHTML =
+match.league;
+
+
+document.getElementById("win").innerHTML =
+"主胜：" + match.win +
+"<br>平局：" + match.draw +
+"<br>客胜：" + match.lose;
+
+
+document.getElementById("score").innerHTML =
+match.score;
+
+
+document.getElementById("attack").innerHTML =
+"攻击力：" + match.attack;
+
+
+document.getElementById("defense").innerHTML =
+"防守力：" + match.defense;
+
+
+document.getElementById("form").innerHTML =
+"近期状态：" + match.form;
+
 
 }
+
+
+});
+
+
+</script>
 
 else if(game=="real"){
 
