@@ -39,24 +39,26 @@ body{
 }
 
 .info{
-    line-height:32px;
     font-size:17px;
+    line-height:32px;
 }
 
 .score{
-    font-size:28px;
+    font-size:26px;
     font-weight:bold;
 }
 
 .back{
+
     display:block;
     margin-top:25px;
     background:#111827;
     color:white;
-    text-align:center;
     padding:15px;
+    text-align:center;
     border-radius:12px;
     text-decoration:none;
+
 }
 
 </style>
@@ -71,9 +73,10 @@ body{
 
 <h1>⚽ Football AI</h1>
 
-<p>智能足球预测系统</p>
+<p>AI足球预测分析系统</p>
 
 </div>
+
 
 
 
@@ -94,6 +97,7 @@ body{
 
 
 
+
 <div class="card">
 
 <div class="title">
@@ -105,6 +109,7 @@ body{
 </div>
 
 </div>
+
 
 
 
@@ -124,10 +129,11 @@ body{
 
 
 
+
 <div class="card">
 
 <div class="title">
-📈 xG预期进球
+📈 xG数据
 </div>
 
 <div class="info" id="xg">
@@ -135,6 +141,7 @@ body{
 </div>
 
 </div>
+
 
 
 
@@ -154,10 +161,11 @@ body{
 
 
 
+
 <div class="card">
 
 <div class="title">
-💰 赔率
+💰 盘口赔率
 </div>
 
 <div class="info" id="odds">
@@ -169,10 +177,27 @@ body{
 
 
 
+
 <div class="card">
 
 <div class="title">
-🤖 AI预测
+🤖 AI综合评分
+</div>
+
+<div class="info" id="aiScore">
+计算中...
+</div>
+
+</div>
+
+
+
+
+
+<div class="card">
+
+<div class="title">
+🎯 AI预测
 </div>
 
 <div class="info" id="prediction">
@@ -180,6 +205,7 @@ body{
 </div>
 
 </div>
+
 
 
 
@@ -199,9 +225,13 @@ body{
 
 
 
+
 <a class="back" href="matches.html">
+
 返回比赛列表
+
 </a>
+
 
 
 
@@ -234,13 +264,14 @@ document.getElementById("matchName").innerHTML =
 match.home + " VS " + match.away;
 
 
-
 document.getElementById("league").innerHTML =
 match.league;
 
 
 
+
 document.getElementById("strength").innerHTML =
+
 match.home + "：" + match.strength.home +
 "<br>" +
 match.away + "：" + match.strength.away;
@@ -248,6 +279,7 @@ match.away + "：" + match.strength.away;
 
 
 document.getElementById("form").innerHTML =
+
 match.home + "：" + match.form.detail.home +
 "<br>" +
 match.away + "：" + match.form.detail.away;
@@ -255,6 +287,7 @@ match.away + "：" + match.form.detail.away;
 
 
 document.getElementById("xg").innerHTML =
+
 match.home + "：" + match.xg.home +
 "<br>" +
 match.away + "：" + match.xg.away;
@@ -262,6 +295,7 @@ match.away + "：" + match.xg.away;
 
 
 document.getElementById("defense").innerHTML =
+
 match.home + "：" + match.defense.home +
 "<br>" +
 match.away + "：" + match.defense.away;
@@ -269,17 +303,86 @@ match.away + "：" + match.defense.away;
 
 
 document.getElementById("odds").innerHTML =
+
 "主胜：" + match.odds.home +
 "<br>平：" + match.odds.draw +
 "<br>客胜：" + match.odds.away;
 
 
 
+
+// AI评分计算
+
+
+let strength =
+(match.strength.home - match.strength.away) * 0.3;
+
+
+let form =
+(match.form.home - match.form.away) * 0.2;
+
+
+let xg =
+(match.xg.home - match.xg.away) * 10;
+
+
+let defense =
+(match.defense.home - match.defense.away) * 0.15;
+
+
+let market =
+(match.odds.away - match.odds.home) * 2;
+
+
+
+let homeScore =
+80 +
+strength +
+form +
+xg +
+defense +
+market;
+
+
+
+let awayScore =
+100 - homeScore;
+
+
+
+if(awayScore < 50){
+
+awayScore = 50;
+
+}
+
+
+
+document.getElementById("aiScore").innerHTML =
+
+match.home + " AI评分：" +
+homeScore.toFixed(1) +
+
+"<br>" +
+
+match.away + " AI评分：" +
+awayScore.toFixed(1) +
+
+"<br><br>" +
+
+"AI倾向：" +
+
+(match.home + " 方向");
+
+
+
+
+
 document.getElementById("prediction").innerHTML =
 
-"主胜概率：" + match.prediction.home_win +
-"<br>平局概率：" + match.prediction.draw +
-"<br>客胜概率：" + match.prediction.away_win +
+"主胜：" + match.prediction.home_win +
+"<br>平：" + match.prediction.draw +
+"<br>客胜：" + match.prediction.away_win +
 "<br>预测比分：" + match.prediction.score;
 
 
@@ -293,12 +396,11 @@ match.risk;
 
 else{
 
-
 document.getElementById("matchName").innerHTML =
 "未找到比赛";
 
-
 }
+
 
 
 });
