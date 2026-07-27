@@ -7,6 +7,7 @@
 
 <title>Football AI - 比赛分析</title>
 
+
 <style>
 
 body{
@@ -16,36 +17,51 @@ body{
     background:#f4f6f8;
 }
 
+
 .header{
+
     background:#111827;
     color:white;
     padding:25px;
-    border-radius:18px;
     text-align:center;
+    border-radius:18px;
+
 }
 
+
 .card{
+
     background:white;
     margin-top:20px;
     padding:20px;
     border-radius:18px;
     box-shadow:0 3px 10px #ddd;
+
 }
+
 
 .title{
-    font-size:22px;
+
+    font-size:20px;
     font-weight:bold;
     margin-bottom:15px;
+
 }
 
-.number{
+
+.info{
+
     font-size:18px;
     line-height:35px;
+
 }
 
+
 .score{
-    font-size:26px;
+
+    font-size:30px;
     font-weight:bold;
+
 }
 
 
@@ -55,16 +71,19 @@ body{
     margin-top:20px;
     background:#111827;
     color:white;
-    padding:12px;
     text-align:center;
+    padding:12px;
     border-radius:12px;
     text-decoration:none;
 
 }
 
+
 </style>
 
+
 </head>
+
 
 
 <body>
@@ -83,13 +102,17 @@ body{
 <div class="card">
 
 <div class="title">
-英超
+比赛
 </div>
 
 <h2 id="matchName">
-加载比赛中...</h2>
+加载中...
+</h2>
+
+<p id="league"></p>
 
 </div>
+
 
 
 
@@ -100,17 +123,15 @@ body{
 </div>
 
 
-<div class="number">
+<div class="info" id="result">
 
-主胜：42%<br>
-
-平局：30%<br>
-
-客胜：28%
+加载中...
 
 </div>
 
+
 </div>
+
 
 
 
@@ -118,30 +139,19 @@ body{
 <div class="card">
 
 <div class="title">
-🎯 比分概率
+🎯 AI比分预测
 </div>
 
 
-<div class="score">
+<div class="score" id="score">
 
-1-1
+加载中...
+
+</div>
+
 
 </div>
 
-<p>
-
-其他可能：
-
-<br>
-2-1
-<br>
-1-0
-<br>
-2-2
-
-</p>
-
-</div>
 
 
 
@@ -149,66 +159,24 @@ body{
 <div class="card">
 
 <div class="title">
-🤖 AI模型分析
+🤖 AI模型评分
 </div>
 
 
-<p>
+<div class="info">
 
-✅ 进攻能力分析
+<p id="attack"></p>
 
-</p>
+<p id="defense"></p>
 
-<p>
-
-✅ 防守稳定性分析
-
-</p>
-
-<p>
-
-✅ 近期状态分析
-
-</p>
-
-<p>
-
-✅ 盘口趋势分析
-
-</p>
+<p id="form"></p>
 
 
 </div>
 
 
-
-
-<div class="card">
-
-<div class="title">
-⚠ 风险提示
 </div>
 
-
-<p>
-
-中等风险
-
-</p>
-
-<p>
-
-注意：
-<br>
-- 首发变化
-<br>
-- 临场盘口
-<br>
-- 爆冷可能
-
-</p>
-
-</div>
 
 
 
@@ -221,19 +189,25 @@ body{
 
 
 
+
 <script>
+
 
 let params = new URLSearchParams(window.location.search);
 
 let game = params.get("game");
 
 
+
 fetch("matches.json")
+
 .then(response => response.json())
+
 .then(data => {
 
 
 let match = data.find(item => item.id == game);
+
 
 
 if(match){
@@ -243,33 +217,53 @@ document.getElementById("matchName").innerHTML =
 match.home + " VS " + match.away;
 
 
+
 document.getElementById("league").innerHTML =
 match.league;
 
 
-document.getElementById("win").innerHTML =
+
+document.getElementById("result").innerHTML =
+
 "主胜：" + match.win +
 "<br>平局：" + match.draw +
 "<br>客胜：" + match.lose;
+
 
 
 document.getElementById("score").innerHTML =
 match.score;
 
 
+
 document.getElementById("attack").innerHTML =
 "攻击力：" + match.attack;
+
 
 
 document.getElementById("defense").innerHTML =
 "防守力：" + match.defense;
 
 
+
 document.getElementById("form").innerHTML =
 "近期状态：" + match.form;
 
 
+
 }
+
+
+
+else{
+
+
+document.getElementById("matchName").innerHTML =
+"未找到比赛";
+
+
+}
+
 
 
 });
@@ -277,24 +271,8 @@ document.getElementById("form").innerHTML =
 
 </script>
 
-else if(game=="real"){
 
-    matchName.innerHTML="皇家马德里 VS 巴塞罗那";
 
-}
+</body>
 
-else if(game=="inter"){
-
-    matchName.innerHTML="国际米兰 VS AC米兰";
-
-}
-
-else{
-
-    matchName.innerHTML="未知比赛";
-
-}
-
-</script>
-</body>    
 </html>
