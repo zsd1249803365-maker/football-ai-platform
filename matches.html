@@ -1,118 +1,169 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Football AI - 比赛列表</title>
+function showGames(list){
 
 
-<style>
+if(list.length==0){
 
-body{
-    margin:0;
-    padding:20px;
-    font-family:Arial,sans-serif;
-    background:#f4f6f8;
-}
-
-
-.header{
-
-    background:#111827;
-    color:white;
-    padding:25px;
-    text-align:center;
-    border-radius:18px;
+return "暂无推荐比赛";
 
 }
 
 
-.card{
 
-    background:white;
-    margin-top:20px;
-    padding:20px;
-    border-radius:18px;
-    box-shadow:0 3px 10px #ddd;
-    cursor:pointer;
+let text="";
+
+
+list.slice(0,5).forEach(function(g,index){
+
+
+
+text+=
+
+(index+1)+". "+
+
+g.home+
+
+" VS "+
+
+g.away+
+
+"<br>"+
+
+"推荐："+
+
+g.pick+
+
+"<br>"+
+
+"AI评分："+
+
+g.score.toFixed(1)+
+
+"<br>"+
+
+"胜率参考："+
+
+g.prob.toFixed(1)+"%"+
+
+"<br>"+
+
+"风险："+
+
+g.risk+
+
+"<br><br>";
+
+
+
+});
+
+
+
+return text;
+
 
 }
 
 
-.card:hover{
-
-    transform:scale(1.02);
-
-}
-
-
-.league{
-
-    color:#666;
-
-}
-
-
-.match{
-
-    font-size:22px;
-    font-weight:bold;
-    margin-top:10px;
-
-}
-
-
-a{
-
-    text-decoration:none;
-    color:#111;
-
-}
-
-
-</style>
-
-
-</head>
 
 
 
-<body>
+document.getElementById("safe").innerHTML=
 
+`
 
+<div class="title">
 
-<div class="header">
-
-<h1>⚽ Football AI</h1>
-
-<p>智能足球预测平台</p>
+⭐ 稳健方案
 
 </div>
 
+<div class="item good">
 
-
-
-<div id="matches">
-
-加载比赛中...
+${showGames(safeGames)}
 
 </div>
 
+`;
 
 
 
 
 
-<script>
+document.getElementById("balance").innerHTML=
+
+`
+
+<div class="title">
+
+⚖️ 平衡方案
+
+</div>
+
+<div class="item mid">
+
+${showGames(balanceGames)}
+
+</div>
+
+`;
+
+
+
+
+
+document.getElementById("risk").innerHTML=
+
+`
+
+<div class="title">
+
+🔥 博冷方案
+
+</div>
+
+<div class="item high">
+
+${showGames(riskGames)}
+
+</div>
+
+`;
+
+
+
+
+})
+
+
+.catch(function(error){
+
+
+document.body.innerHTML+=
+
+"<p>数据读取失败："+error+"</p>";
+
+
+});
+
+
+
+</script>
+
+
+
+</body>
+
+
+</html><script>
 
 
 fetch("matches.json")
 
-.then(response => response.json())
 
-.then(data => {
+.then(res=>res.json())
+
+
+.then(data=>{
 
 
 
@@ -120,25 +171,14 @@ let html="";
 
 
 
-data.forEach(match => {
+data.forEach(function(match){
 
 
 
-html += `
-
-
-<a href="match-detail.html?game=${match.id}">
+html+=`
 
 
 <div class="card">
-
-
-<div class="league">
-
-${match.league}
-
-</div>
-
 
 
 <div class="match">
@@ -148,10 +188,30 @@ ${match.home} VS ${match.away}
 </div>
 
 
+
+<div class="info">
+
+联赛：${match.league||"未知"}
+
+<br>
+
+比赛编号：${match.id||""}
+
+
 </div>
 
 
+
+
+<a class="button" href="match-detail.html?game=${match.id}">
+
+查看AI详细分析
+
 </a>
+
+
+
+</div>
 
 
 `;
@@ -162,18 +222,42 @@ ${match.home} VS ${match.away}
 
 
 
-document.getElementById("matches").innerHTML=html;
+
+document.getElementById("list").innerHTML=html;
+
+
+
+})
+
+
+.catch(function(error){
+
+
+
+document.getElementById("list").innerHTML=
+
+`
+
+<div class="card">
+
+读取比赛数据失败：
+
+${error}
+
+</div>
+
+`;
 
 
 
 });
 
 
+
 </script>
 
 
-
-
 </body>
+
 
 </html>
