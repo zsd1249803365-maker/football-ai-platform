@@ -36,14 +36,6 @@
     },
 
 
-    "prediction": {
-      "home_win": "42%",
-      "draw": "30%",
-      "away_win": "28%",
-      "score": "1-1"
-    },
-
-
     "market": {
 
       "asian_handicap": {
@@ -59,16 +51,41 @@
       },
 
       "opening": {
-        "home": "1.85",
-        "draw": "3.60",
-        "away": "3.90"
+        "home": 1.85,
+        "draw": 3.60,
+        "away": 3.90
       },
 
       "current": {
-        "home": "1.80",
-        "draw": "3.55",
-        "away": "4.10"
+        "home": 1.80,
+        "draw": 3.55,
+        "away": 4.10
       }
+
+    },
+
+
+    "market_analysis": {
+
+      "home_change": "下降",
+
+      "away_change": "上升",
+
+      "trend": "主队方向增强",
+
+      "heat": "中",
+
+      "risk_note": "主队热度增加，需要防平局"
+
+    },
+
+
+    "prediction": {
+
+      "home_win": "42%",
+      "draw": "30%",
+      "away_win": "28%",
+      "score": "1-1"
 
     },
 
@@ -78,17 +95,21 @@
   },
 
 
-
   {
     "id": "real",
+
     "league": "西甲",
+
     "home": "皇家马德里",
+
     "away": "巴塞罗那",
+
 
     "strength": {
       "home": 90,
       "away": 87
     },
+
 
     "form": {
       "home": 86,
@@ -99,28 +120,23 @@
       }
     },
 
+
     "xg": {
       "home": 1.95,
       "away": 1.68
     },
+
 
     "defense": {
       "home": 89,
       "away": 85
     },
 
+
     "odds": {
       "home": 2.10,
       "draw": 3.50,
       "away": 3.20
-    },
-
-
-    "prediction": {
-      "home_win": "45%",
-      "draw": "27%",
-      "away_win": "28%",
-      "score": "2-1"
     },
 
 
@@ -139,16 +155,41 @@
       },
 
       "opening": {
-        "home": "2.10",
-        "draw": "3.50",
-        "away": "3.20"
+        "home": 2.10,
+        "draw": 3.50,
+        "away": 3.20
       },
 
       "current": {
-        "home": "2.00",
-        "draw": "3.60",
-        "away": "3.35"
+        "home": 2.00,
+        "draw": 3.60,
+        "away": 3.35
       }
+
+    },
+
+
+    "market_analysis": {
+
+      "home_change": "下降",
+
+      "away_change": "上升",
+
+      "trend": "皇马支持增强",
+
+      "heat": "高",
+
+      "risk_note": "强队热门，存在让胜风险"
+
+    },
+
+
+    "prediction": {
+
+      "home_win": "45%",
+      "draw": "27%",
+      "away_win": "28%",
+      "score": "2-1"
 
     },
 
@@ -158,17 +199,21 @@
   },
 
 
-
   {
     "id": "inter",
+
     "league": "意甲",
+
     "home": "国际米兰",
+
     "away": "AC米兰",
+
 
     "strength": {
       "home": 86,
       "away": 82
     },
+
 
     "form": {
       "home": 84,
@@ -179,28 +224,23 @@
       }
     },
 
+
     "xg": {
       "home": 1.80,
       "away": 1.20
     },
+
 
     "defense": {
       "home": 91,
       "away": 84
     },
 
+
     "odds": {
       "home": 2.00,
       "draw": 3.30,
       "away": 3.60
-    },
-
-
-    "prediction": {
-      "home_win": "38%",
-      "draw": "31%",
-      "away_win": "31%",
-      "score": "1-0"
     },
 
 
@@ -219,16 +259,41 @@
       },
 
       "opening": {
-        "home": "2.00",
-        "draw": "3.30",
-        "away": "3.60"
+        "home": 2.00,
+        "draw": 3.30,
+        "away": 3.60
       },
 
       "current": {
-        "home": "1.95",
-        "draw": "3.35",
-        "away": "3.75"
+        "home": 1.95,
+        "draw": 3.35,
+        "away": 3.75
       }
+
+    },
+
+
+    "market_analysis": {
+
+      "home_change": "下降",
+
+      "away_change": "上升",
+
+      "trend": "国米方向增强",
+
+      "heat": "低",
+
+      "risk_note": "盘口稳定，冷门概率较低"
+
+    },
+
+
+    "prediction": {
+
+      "home_win": "38%",
+      "draw": "31%",
+      "away_win": "31%",
+      "score": "1-0"
 
     },
 
