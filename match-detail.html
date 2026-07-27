@@ -5,31 +5,37 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Football AI 单场分析 v3.8</title>
+<title>Football AI 单场分析 v3.8.1</title>
 
 
 <style>
 
 body{
+
 margin:0;
 padding:20px;
 font-family:Arial,sans-serif;
 background:#f3f4f6;
+
 }
 
 
 .header{
+
 background:#111827;
 color:white;
 padding:25px;
 border-radius:18px;
 text-align:center;
+
 }
 
 
 .nav{
+
 text-align:center;
-margin:15px 0;
+margin-top:15px;
+
 }
 
 
@@ -112,28 +118,34 @@ color:#dc2626;
 
 <h1>⚽ Football AI</h1>
 
-<p>竞彩智能分析系统 v3.8</p>
+<p>竞彩智能分析系统 v3.8.1</p>
 
 </div>
 
 
+
 <div class="nav">
+
 
 <a href="index.html">
 🏠首页
 </a>
 
+
 <a href="matches.html">
 ⚽比赛列表
 </a>
+
 
 <a href="ai-ranking.html">
 📊排行榜
 </a>
 
+
 <a href="ai-bet.html">
 🎫方案
 </a>
+
 
 </div>
 
@@ -145,11 +157,16 @@ color:#dc2626;
 比赛信息
 </div>
 
+
 <h2 id="matchName">
 加载中...
 </h2>
 
-<div id="league" class="info"></div>
+
+<div id="league" class="info">
+
+</div>
+
 
 </div><div class="card">
 
@@ -158,7 +175,7 @@ color:#dc2626;
 </div>
 
 <div id="aiReport" class="report">
-正在生成...
+正在生成分析...
 </div>
 
 </div>
@@ -172,7 +189,7 @@ color:#dc2626;
 </div>
 
 <div id="aiAdvice" class="report">
-正在生成...
+正在生成建议...
 </div>
 
 </div>
@@ -186,7 +203,7 @@ color:#dc2626;
 </div>
 
 <div id="betAdvice" class="report">
-正在生成...
+正在生成方案...
 </div>
 
 </div>
@@ -244,7 +261,7 @@ color:#dc2626;
 <div class="card">
 
 <div class="title">
-💰 欧赔数据
+💰 欧赔
 </div>
 
 <div id="odds" class="info"></div>
@@ -352,7 +369,7 @@ color:#dc2626;
 <div class="card">
 
 <div class="title">
-💰 市场资金逻辑
+💰 市场逻辑
 </div>
 
 <div id="marketLogic" class="info"></div>
@@ -394,28 +411,31 @@ color:#dc2626;
 <div id="risk" class="score"></div>
 
 </div>
-<a class="back" href="matches.html">
+
+
+
+<a href="matches.html" class="nav a">
 
 返回比赛列表
 
-</a>
+</a><script>
 
+let params = new URLSearchParams(window.location.search);
 
-<script>
-
-let params=new URLSearchParams(window.location.search);
-
-let game=params.get("game");
+let game = params.get("game");
 
 
 fetch("matches.json")
 
+
 .then(res=>res.json())
+
 
 .then(data=>{
 
 
-let match=data.find(item=>item.id==game);
+let match = data.find(item=>item.id == game);
+
 
 
 if(!match){
@@ -427,112 +447,117 @@ return;
 }
 
 
-document.getElementById("matchName").innerHTML=
+
+document.getElementById("matchName").innerHTML =
 match.home+" VS "+match.away;
 
 
-document.getElementById("league").innerHTML=
-match.league;
+
+document.getElementById("league").innerHTML =
+"联赛："+match.league;
 
 
 
-document.getElementById("strength").innerHTML=
+document.getElementById("strength").innerHTML =
 match.home+"："+match.strength.home+
 "<br>"+
 match.away+"："+match.strength.away;
 
 
 
-document.getElementById("form").innerHTML=
+document.getElementById("form").innerHTML =
 match.home+"："+match.form.detail.home+
 "<br>"+
 match.away+"："+match.form.detail.away;
 
 
 
-document.getElementById("xg").innerHTML=
+document.getElementById("xg").innerHTML =
 match.home+"："+match.xg.home+
 "<br>"+
 match.away+"："+match.xg.away;
 
 
 
-document.getElementById("defense").innerHTML=
+document.getElementById("defense").innerHTML =
 match.home+"："+match.defense.home+
 "<br>"+
 match.away+"："+match.defense.away;
 
 
 
-document.getElementById("odds").innerHTML=
+document.getElementById("odds").innerHTML =
 "主胜："+match.odds.home+
 "<br>平："+match.odds.draw+
 "<br>客胜："+match.odds.away;
 
 
 
-document.getElementById("market").innerHTML=
+document.getElementById("market").innerHTML =
 "让球："+match.market.asian_handicap.line+
 "<br>"+
-"主队："+match.market.asian_handicap.home+
+match.market.asian_handicap.home+
 "<br>"+
-"客队："+match.market.asian_handicap.away;
+match.market.asian_handicap.away;
 
 
 
-document.getElementById("marketAnalysis").innerHTML=
+document.getElementById("marketAnalysis").innerHTML =
 match.market_analysis.trend+
 "<br>"+
 match.market_analysis.risk_note;
 
 
 
-document.getElementById("aiMarket").innerHTML=
+document.getElementById("aiMarket").innerHTML =
 match.ai_market.analysis;
 
 
 
-document.getElementById("motivation").innerHTML=
-match.motivation.level;
+document.getElementById("motivation").innerHTML =
+match.motivation.level+
+"（影响："+match.motivation.impact+"）";
 
 
 
-document.getElementById("schedule").innerHTML=
+document.getElementById("schedule").innerHTML =
 match.schedule.recent_match+
 "<br>疲劳："+match.schedule.fatigue;
 
 
 
-document.getElementById("rotation").innerHTML=
+document.getElementById("rotation").innerHTML =
 match.rotation.risk;
 
 
 
-document.getElementById("styleMatch").innerHTML=
+document.getElementById("styleMatch").innerHTML =
 match.style_match.matchup;
 
 
 
-document.getElementById("marketLogic").innerHTML=
+document.getElementById("marketLogic").innerHTML =
 match.market_logic.bookmaker_signal;
 
 
 
-let score=
+let score =
 
 80+
 
 (match.strength.home-match.strength.away)*0.3+
 
-(match.xg.home-match.xg.away)*10;
+(match.xg.home-match.xg.away)*10+
+
+(match.form.home-match.form.away)*0.2;
 
 
 
-let awayScore=160-score;
+let awayScore = 160-score;
 
 
 
-document.getElementById("aiScore").innerHTML=
+document.getElementById("aiScore").innerHTML =
 
 match.home+"："+score.toFixed(1)
 +
@@ -541,7 +566,7 @@ match.away+"："+awayScore.toFixed(1);
 
 
 
-document.getElementById("probability").innerHTML=
+document.getElementById("probability").innerHTML =
 
 "主胜："+match.prediction.home_win+
 "<br>"+
@@ -551,32 +576,49 @@ document.getElementById("probability").innerHTML=
 
 
 
-document.getElementById("risk").innerHTML=
+document.getElementById("risk").innerHTML =
 match.risk;
 
 
 
-document.getElementById("aiReport").innerHTML=
+document.getElementById("aiReport").innerHTML =
 
-"本场："+match.home+" VS "+match.away+
+"本场比赛："+match.home+
+" VS "+
+match.away+
 "<br><br>"+
-"AI分析："+
-match.ai_market.analysis;
+"AI分析："+match.ai_market.analysis+
+"<br><br>"+
+"预测比分："+match.prediction.score;
 
 
 
-document.getElementById("aiAdvice").innerHTML=
+document.getElementById("aiAdvice").innerHTML =
 
-"推荐比分："+match.prediction.score;
-
-
-
-document.getElementById("betAdvice").innerHTML=
-
-"胜平负参考："+
+"推荐方向："+
 match.prediction.home_win+
 "<br>"+
-"风险："+match.risk;
+"风险等级："+match.risk;
+
+
+
+document.getElementById("betAdvice").innerHTML =
+
+"竞彩参考：胜平负结合赔率与盘口分析"+
+"<br><br>"+
+"预测比分："+match.prediction.score;
+
+
+
+})
+
+
+.catch(error=>{
+
+
+document.body.innerHTML +=
+
+"<p>数据读取失败："+error+"</p>";
 
 
 });
