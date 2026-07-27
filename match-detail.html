@@ -7,83 +7,63 @@
 
 <title>Football AI - 比赛分析</title>
 
-
 <style>
 
 body{
     margin:0;
     padding:20px;
     font-family:Arial,sans-serif;
-    background:#f4f6f8;
+    background:#f3f4f6;
 }
 
-
 .header{
-
     background:#111827;
     color:white;
     padding:25px;
-    text-align:center;
     border-radius:18px;
-
+    text-align:center;
 }
 
-
 .card{
-
     background:white;
     margin-top:20px;
     padding:20px;
     border-radius:18px;
     box-shadow:0 3px 10px #ddd;
-
 }
 
-
 .title{
-
     font-size:20px;
     font-weight:bold;
     margin-bottom:15px;
-
 }
-
 
 .info{
-
-    font-size:18px;
+    font-size:17px;
     line-height:35px;
-
 }
 
-
-.score{
-
-    font-size:30px;
+.big{
+    font-size:28px;
     font-weight:bold;
-
 }
 
-
-.button{
+.back{
 
     display:block;
-    margin-top:20px;
+    margin-top:25px;
+    padding:15px;
     background:#111827;
     color:white;
     text-align:center;
-    padding:12px;
     border-radius:12px;
     text-decoration:none;
 
 }
 
-
 </style>
 
-
 </head>
-
 
 
 <body>
@@ -93,7 +73,7 @@ body{
 
 <h1>⚽ Football AI</h1>
 
-<p>AI比赛深度分析</p>
+<p>智能足球预测分析</p>
 
 </div>
 
@@ -119,16 +99,14 @@ body{
 <div class="card">
 
 <div class="title">
-📊 胜平负预测
+🔥 球队实力
 </div>
 
-
-<div class="info" id="result">
+<div class="info" id="strength">
 
 加载中...
 
 </div>
-
 
 </div>
 
@@ -139,16 +117,14 @@ body{
 <div class="card">
 
 <div class="title">
-🎯 AI比分预测
+📊 近期状态
 </div>
 
-
-<div class="score" id="score">
+<div class="info" id="form">
 
 加载中...
 
 </div>
-
 
 </div>
 
@@ -159,32 +135,104 @@ body{
 <div class="card">
 
 <div class="title">
-🤖 AI模型评分
-</div>
-
-
-<div class="info">
-
-<p id="attack"></p>
-
-<p id="defense"></p>
-
-<p id="form"></p>
-
+📈 xG预期进球
 
 </div>
 
+<div class="info" id="xg">
+
+加载中...
+
+</div>
 
 </div>
 
 
 
 
-<a class="button" href="matches.html">
 
-返回赛事列表
+<div class="card">
+
+<div class="title">
+🛡 防守能力
+
+</div>
+
+<div class="info" id="defense">
+
+加载中...
+
+</div>
+
+</div>
+
+
+
+
+
+<div class="card">
+
+<div class="title">
+💰 赔率分析
+
+</div>
+
+<div class="info" id="odds">
+
+加载中...
+
+</div>
+
+</div>
+
+
+
+
+
+<div class="card">
+
+<div class="title">
+🤖 AI预测
+
+</div>
+
+<div class="info" id="prediction">
+
+加载中...
+
+</div>
+
+</div>
+
+
+
+
+
+<div class="card">
+
+<div class="title">
+⚠️ 风险等级
+
+</div>
+
+<div class="big" id="risk">
+
+加载中...
+
+</div>
+
+</div>
+
+
+
+
+
+<a class="back" href="matches.html">
+
+返回比赛列表
 
 </a>
+
 
 
 
@@ -223,44 +271,71 @@ match.league;
 
 
 
-document.getElementById("result").innerHTML =
+document.getElementById("strength").innerHTML =
 
-"主胜：" + match.win +
-"<br>平局：" + match.draw +
-"<br>客胜：" + match.lose;
+match.home + "：" + match.team_strength.home +
+"<br>" +
 
-
-
-document.getElementById("score").innerHTML =
-match.score;
-
-
-
-document.getElementById("attack").innerHTML =
-"攻击力：" + match.attack;
-
-
-
-document.getElementById("defense").innerHTML =
-"防守力：" + match.defense;
+match.away + "：" + match.team_strength.away;
 
 
 
 document.getElementById("form").innerHTML =
-"近期状态：" + match.form;
+
+match.home + "：" + match.form.home +
+"<br>" +
+
+match.away + "：" + match.form.away;
+
+
+
+document.getElementById("xg").innerHTML =
+
+match.home + " xG：" + match.xg.home +
+"<br>" +
+
+match.away + " xG：" + match.xg.away;
+
+
+
+document.getElementById("defense").innerHTML =
+
+match.home + "：" + match.defense.home +
+"<br>" +
+
+match.away + "：" + match.defense.away;
+
+
+
+document.getElementById("odds").innerHTML =
+
+"主胜：" + match.odds.home_win +
+"<br>平：" + match.odds.draw +
+"<br>客胜：" + match.odds.away_win;
+
+
+
+document.getElementById("prediction").innerHTML =
+
+"胜：" + match.prediction.win +
+"<br>平：" + match.prediction.draw +
+"<br>负：" + match.prediction.lose +
+"<br>预测比分：" + match.prediction.score;
+
+
+
+document.getElementById("risk").innerHTML =
+
+match.risk;
 
 
 
 }
 
-
-
 else{
 
-
 document.getElementById("matchName").innerHTML =
-"未找到比赛";
-
+"没有找到比赛";
 
 }
 
@@ -270,7 +345,6 @@ document.getElementById("matchName").innerHTML =
 
 
 </script>
-
 
 
 </body>
