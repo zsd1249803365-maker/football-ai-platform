@@ -2,40 +2,131 @@
   {
     "id": "man",
     "league": "英超",
+
     "home": "曼城",
     "away": "利物浦",
-    "win": "42%",
-    "draw": "30%",
-    "lose": "28%",
-    "score": "1-1",
-    "attack": 92,
-    "defense": 85,
-    "form": "4胜1平"
+
+    "team_strength": {
+      "home": 92,
+      "away": 88
+    },
+
+    "form": {
+      "home": "4胜1平",
+      "away": "3胜1平1负"
+    },
+
+    "xg": {
+      "home": 2.15,
+      "away": 1.72
+    },
+
+    "defense": {
+      "home": 86,
+      "away": 83
+    },
+
+    "odds": {
+      "home_win": "1.85",
+      "draw": "3.60",
+      "away_win": "3.90"
+    },
+
+    "prediction": {
+      "win": "42%",
+      "draw": "30%",
+      "lose": "28%",
+      "score": "1-1"
+    },
+
+    "risk": "中等"
   },
+
+
   {
     "id": "real",
     "league": "西甲",
+
     "home": "皇家马德里",
     "away": "巴塞罗那",
-    "win": "45%",
-    "draw": "27%",
-    "lose": "28%",
-    "score": "2-1",
-    "attack": 90,
-    "defense": 88,
-    "form": "3胜2平"
+
+    "team_strength": {
+      "home": 90,
+      "away": 87
+    },
+
+    "form": {
+      "home": "3胜2平",
+      "away": "4胜1负"
+    },
+
+    "xg": {
+      "home": 1.95,
+      "away": 1.68
+    },
+
+    "defense": {
+      "home": 89,
+      "away": 85
+    },
+
+    "odds": {
+      "home_win": "2.10",
+      "draw": "3.50",
+      "away_win": "3.20"
+    },
+
+    "prediction": {
+      "win": "45%",
+      "draw": "27%",
+      "lose": "28%",
+      "score": "2-1"
+    },
+
+    "risk": "较高"
   },
+
+
   {
     "id": "inter",
     "league": "意甲",
+
     "home": "国际米兰",
     "away": "AC米兰",
-    "win": "38%",
-    "draw": "31%",
-    "lose": "31%",
-    "score": "1-0",
-    "attack": 86,
-    "defense": 91,
-    "form": "4胜1负"
+
+    "team_strength": {
+      "home": 86,
+      "away": 82
+    },
+
+    "form": {
+      "home": "4胜1负",
+      "away": "3胜1平1负"
+    },
+
+    "xg": {
+      "home": 1.80,
+      "away": 1.20
+    },
+
+    "defense": {
+      "home": 91,
+      "away": 84
+    },
+
+    "odds": {
+      "home_win": "2.00",
+      "draw": "3.30",
+      "away_win": "3.60"
+    },
+
+    "prediction": {
+      "win": "38%",
+      "draw": "31%",
+      "lose": "31%",
+      "score": "1-0"
+    },
+
+    "risk": "低"
   }
 ]
