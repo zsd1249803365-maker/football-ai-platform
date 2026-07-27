@@ -89,7 +89,6 @@ text-decoration:none;
 
 
 
-
 <div class="card">
 
 <div class="title">🔥 球队实力</div>
@@ -97,7 +96,6 @@ text-decoration:none;
 <div class="info" id="strength"></div>
 
 </div>
-
 
 
 
@@ -111,7 +109,6 @@ text-decoration:none;
 
 
 
-
 <div class="card">
 
 <div class="title">📈 xG数据</div>
@@ -119,7 +116,6 @@ text-decoration:none;
 <div class="info" id="xg"></div>
 
 </div>
-
 
 
 
@@ -133,7 +129,6 @@ text-decoration:none;
 
 
 
-
 <div class="card">
 
 <div class="title">💰 欧赔数据</div>
@@ -141,7 +136,6 @@ text-decoration:none;
 <div class="info" id="odds"></div>
 
 </div>
-
 
 
 
@@ -155,6 +149,15 @@ text-decoration:none;
 
 
 
+<div class="card">
+
+<div class="title">📉 盘口走势分析</div>
+
+<div class="info" id="marketAnalysis"></div>
+
+</div>
+
+
 
 <div class="card">
 
@@ -166,7 +169,6 @@ text-decoration:none;
 
 
 
-
 <div class="card">
 
 <div class="title">📊 AI概率模型</div>
@@ -174,18 +176,6 @@ text-decoration:none;
 <div class="info" id="probability"></div>
 
 </div>
-
-
-
-
-<div class="card">
-
-<div class="title">🎯 预测结果</div>
-
-<div class="info" id="prediction"></div>
-
-</div>
-
 
 
 
@@ -205,11 +195,10 @@ text-decoration:none;
 
 
 
-
 <script>
 
 
-let params = new URLSearchParams(window.location.search);
+let params=new URLSearchParams(window.location.search);
 
 let game=params.get("game");
 
@@ -229,44 +218,48 @@ let match=data.find(item=>item.id==game);
 if(match){
 
 
-document.getElementById("matchName").innerHTML =
+document.getElementById("matchName").innerHTML=
 match.home+" VS "+match.away;
 
 
-document.getElementById("league").innerHTML =
+document.getElementById("league").innerHTML=
 match.league;
 
 
 
-document.getElementById("strength").innerHTML =
+document.getElementById("strength").innerHTML=
+
 match.home+"："+match.strength.home+
 "<br>"+
 match.away+"："+match.strength.away;
 
 
 
-document.getElementById("form").innerHTML =
+document.getElementById("form").innerHTML=
+
 match.home+"："+match.form.detail.home+
 "<br>"+
 match.away+"："+match.form.detail.away;
 
 
 
-document.getElementById("xg").innerHTML =
+document.getElementById("xg").innerHTML=
+
 match.home+"："+match.xg.home+
 "<br>"+
 match.away+"："+match.xg.away;
 
 
 
-document.getElementById("defense").innerHTML =
+document.getElementById("defense").innerHTML=
+
 match.home+"："+match.defense.home+
 "<br>"+
 match.away+"："+match.defense.away;
 
 
 
-document.getElementById("odds").innerHTML =
+document.getElementById("odds").innerHTML=
 
 "主胜："+match.odds.home+
 "<br>平："+match.odds.draw+
@@ -274,7 +267,7 @@ document.getElementById("odds").innerHTML =
 
 
 
-document.getElementById("market").innerHTML =
+document.getElementById("market").innerHTML=
 
 "让球："+match.market.asian_handicap.line+
 "<br>"+
@@ -282,43 +275,63 @@ document.getElementById("market").innerHTML =
 "<br>"+
 "客队方向："+match.market.asian_handicap.away+
 "<br><br>"+
-
 "大小球："+match.market.goal.line+
 "<br>"+
-"大球："+match.market.goal.over+
+"大："+match.market.goal.over+
 "<br>"+
-"小球："+match.market.goal.under+
-"<br><br>"+
+"小："+match.market.goal.under;
+
+
+
+// 盘口走势
+
+document.getElementById("marketAnalysis").innerHTML=
 
 "初盘："+
-
 match.market.opening.home+
 " / "+
 match.market.opening.draw+
 " / "+
 match.market.opening.away+
 
-"<br>"+
+"<br><br>"+
 
 "即时："+
-
 match.market.current.home+
 " / "+
 match.market.current.draw+
 " / "+
-match.market.current.away;
+match.market.current.away+
+
+"<br><br>"+
+
+"走势："+
+match.market_analysis.trend+
+
+"<br>"+
+
+"热度："+
+match.market_analysis.heat+
+
+"<br>"+
+
+"风险提示："+
+match.market_analysis.risk_note;
+
 
 
 
 
 // AI评分
 
-let homeScore =
+let homeScore=
+
 80+
 (match.strength.home-match.strength.away)*0.3+
 (match.form.home-match.form.away)*0.2+
 (match.xg.home-match.xg.away)*10+
 (match.defense.home-match.defense.away)*0.15;
+
 
 
 let awayScore=160-homeScore;
@@ -330,6 +343,7 @@ document.getElementById("aiScore").innerHTML=
 match.home+"："+homeScore.toFixed(1)+
 "<br>"+
 match.away+"："+awayScore.toFixed(1);
+
 
 
 
@@ -358,16 +372,7 @@ document.getElementById("probability").innerHTML=
 
 
 
-document.getElementById("prediction").innerHTML=
-
-"主胜："+match.prediction.home_win+
-"<br>平："+match.prediction.draw+
-"<br>客胜："+match.prediction.away_win+
-"<br>预测比分："+match.prediction.score;
-
-
-
-document.getElementById("risk").innerHTML =
+document.getElementById("risk").innerHTML=
 match.risk;
 
 
