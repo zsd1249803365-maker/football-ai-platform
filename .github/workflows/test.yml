@@ -1,0 +1,46 @@
+name: test football data
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: 下载代码
+      uses: actions/checkout@v4
+
+
+    - name: 测试访问500
+      run: |
+
+        python - <<EOF
+
+        import requests
+
+
+        url="https://odds.500.com/"
+
+
+        headers={
+        "User-Agent":"Mozilla/5.0"
+        }
+
+
+        r=requests.get(
+        url,
+        headers=headers,
+        timeout=10
+        )
+
+
+        print("访问状态：",r.status_code)
+
+
+        print(r.text[:300])
+
+
+        EOF
