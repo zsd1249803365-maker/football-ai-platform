@@ -5,7 +5,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Football AI</title>
+<title>Football AI v3.7</title>
 
 
 <style>
@@ -102,6 +102,25 @@ line-height:32px;
 
 
 
+.match{
+
+font-size:19px;
+font-weight:bold;
+
+}
+
+
+
+.score{
+
+font-size:24px;
+font-weight:bold;
+color:#dc2626;
+
+}
+
+
+
 .tag{
 
 display:inline-block;
@@ -114,20 +133,10 @@ margin:5px;
 
 
 
-.footer{
-
-text-align:center;
-margin-top:30px;
-color:#777;
-
-}
-
-
 </style>
 
 
 </head>
-
 
 
 <body>
@@ -136,12 +145,9 @@ color:#777;
 
 <div class="header">
 
-
 <h1>⚽ Football AI</h1>
 
-
-<p>竞彩智能分析系统 v3.6</p>
-
+<p>竞彩智能分析系统 v3.7</p>
 
 </div>
 
@@ -183,9 +189,7 @@ color:#777;
 </a>
 
 
-
 </div>
-
 
 
 
@@ -197,50 +201,19 @@ color:#777;
 
 <div class="title">
 
-📈 系统状态
+📈 今日数据
 
 </div>
 
 
+<div id="statistics" class="info">
 
-<div class="info">
-
-
-当前版本：
-
-Football AI v3.6
-
-
-<br>
-
-
-AI模型：
-
-综合盘口分析模型
-
-
-<br>
-
-
-分析维度：
-
-xG / 状态 / 伤停 / 盘口 / 市场
-
-
-<br>
-
-
-数据状态：
-
-正常运行
-
+正在读取数据...
 
 </div>
 
 
-
 </div>
-
 
 
 
@@ -252,115 +225,238 @@ xG / 状态 / 伤停 / 盘口 / 市场
 
 <div class="title">
 
-🤖 AI分析能力
+🔥 AI精选比赛
 
 </div>
 
 
-<span class="tag">
+<div id="topGames" class="info">
 
-xG数据
-
-</span>
-
-
-<span class="tag">
-
-球队状态
-
-</span>
-
-
-<span class="tag">
-
-伤停分析
-
-</span>
-
-
-<span class="tag">
-
-欧赔分析
-
-</span>
-
-
-<span class="tag">
-
-竞彩盘口
-
-</span>
-
-
-<span class="tag">
-
-市场风险
-
-</span>
-
-
+正在分析...
 
 </div>
 
 
+</div><script>
+
+
+fetch("matches.json")
+
+
+.then(res=>res.json())
+
+
+.then(data=>{
+
+
+
+let total=data.length;
+
+
+
+let homeCount=0;
+
+let drawCount=0;
+
+let awayCount=0;
+
+
+
+let games=[];
+
+
+
+data.forEach(function(match){
+
+
+
+let score=0;
+
+
+
+if(match.strength){
+
+score += match.strength.home*0.3;
+
+score -= match.strength.away*0.2;
+
+}
+
+
+
+if(match.xg){
+
+score += (match.xg.home-match.xg.away)*10;
+
+}
+
+
+
+if(match.form){
+
+score += (match.form.home-match.form.away)*0.5;
+
+}
 
 
 
 
 
-<div class="card">
+let pick="";
 
 
-<div class="title">
 
-⚠ 风险提示
+if(score>10){
 
-</div>
+pick="主队优势";
 
+homeCount++;
 
-<div class="info">
+}
 
+else if(score<-10){
 
-AI预测仅作为分析参考。
+pick="客队优势";
 
+awayCount++;
 
-<br>
+}
 
+else{
 
-重点关注：
+pick="平局倾向";
 
-<br>
+drawCount++;
 
-- 临场阵容变化
-
-<br>
-
-- 盘口水位调整
-
-<br>
-
-- 热门方向风险
-
-<br>
-
-- 冷门爆发可能
-
-
-</div>
-
-
-</div>
+}
 
 
 
 
+games.push({
+
+home:match.home,
+
+away:match.away,
+
+score:score,
+
+pick:pick
+
+});
 
 
-<div class="footer">
 
-Football AI v3.6
+});
 
-</div>
+
+
+
+
+
+games.sort(function(a,b){
+
+return b.score-a.score;
+
+});
+
+
+
+
+
+
+document.getElementById("statistics").innerHTML=
+
+
+"今日比赛："+total+"场"
+
++"<br><br>"+
+
+"AI倾向统计："
+
++"<br>"+
+
+"主队优势："+homeCount+"场"
+
++"<br>"+
+
+"平局倾向："+drawCount+"场"
+
++"<br>"+
+
+"客队优势："+awayCount+"场";
+
+
+
+
+
+
+
+let html="";
+
+
+
+games.slice(0,3).forEach(function(g,index){
+
+
+
+html+=
+
+
+(index+1)+". "
+
++g.home+
+
+" VS "
+
++g.away+
+
+"<br>"+
+
+"AI评分："+
+
+g.score.toFixed(1)
+
++
+
+"<br>"+
+
+"方向："+
+
+g.pick
+
++
+
+"<br><br>";
+
+
+
+});
+
+
+
+
+
+document.getElementById("topGames").innerHTML=html;
+
+
+
+})
+
+
+.catch(function(error){
+
+
+document.getElementById("statistics").innerHTML=
+
+"数据读取失败："+error;
+
+
+});
+
+
+
+</script>
 
 
 
