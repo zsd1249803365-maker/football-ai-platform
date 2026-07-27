@@ -95,23 +95,39 @@
         ],
 
         "totalImpact": -2
-
       },
 
 
       "away": {
 
-        "players": [
-          {
-            "name": "替补前锋",
-            "position": "FW",
-            "impact": 0
-          }
-        ],
+        "players": [],
 
         "totalImpact": 0
-
       }
+
+    },
+
+
+    "motivation": {
+
+      "level": "争冠",
+      "impact": 5
+
+    },
+
+
+    "schedule": {
+
+      "recent_match": "欧冠4天前",
+      "fatigue": -2
+
+    },
+
+
+    "rotation": {
+
+      "risk": "低",
+      "impact": 0
 
     },
 
@@ -128,10 +144,10 @@
 
     "risk": "中等"
 
-  },
+  }
+,
 
-
-  {
+{
     "id": "real",
     "league": "西甲",
     "home": "皇家马德里",
@@ -199,7 +215,7 @@
 
     "market_analysis": {
 
-      "trend": "皇马支持增强",
+      "trend": "皇马方向增强",
       "heat": "高",
       "risk_note": "强队热门，防让胜失败"
 
@@ -244,6 +260,30 @@
     },
 
 
+    "motivation": {
+
+      "level": "争冠",
+      "impact": 5
+
+    },
+
+
+    "schedule": {
+
+      "recent_match": "联赛正常",
+      "fatigue": 0
+
+    },
+
+
+    "rotation": {
+
+      "risk": "低",
+      "impact": 0
+
+    },
+
+
     "prediction": {
 
       "home_win": "45%",
@@ -256,10 +296,10 @@
 
     "risk": "较高"
 
-  },
+},
 
 
-  {
+{
     "id": "inter",
     "league": "意甲",
     "home": "国际米兰",
@@ -368,6 +408,30 @@
         "totalImpact": -3
 
       }
+
+    },
+
+
+    "motivation": {
+
+      "level": "欧战资格",
+      "impact": 3
+
+    },
+
+
+    "schedule": {
+
+      "recent_match": "联赛正常",
+      "fatigue": 0
+
+    },
+
+
+    "rotation": {
+
+      "risk": "低",
+      "impact": 0
 
     },
 
