@@ -86,9 +86,8 @@ body{
 英超
 </div>
 
-<h2>
-曼城 VS 利物浦
-</h2>
+<h2 id="matchName">
+加载比赛中...</h2>
 
 </div>
 
@@ -221,6 +220,40 @@ body{
 
 
 
-</body>
 
+<script>
+
+let params = new URLSearchParams(window.location.search);
+
+let game = params.get("game");
+
+let matchName = document.getElementById("matchName");
+
+
+if(game=="man"){
+
+    matchName.innerHTML="曼城 VS 利物浦";
+
+}
+
+else if(game=="real"){
+
+    matchName.innerHTML="皇家马德里 VS 巴塞罗那";
+
+}
+
+else if(game=="inter"){
+
+    matchName.innerHTML="国际米兰 VS AC米兰";
+
+}
+
+else{
+
+    matchName.innerHTML="未知比赛";
+
+}
+
+</script>
+</body>    
 </html>
