@@ -149,6 +149,27 @@ text-decoration:none;
 
 
 <div class="card">
+<div class="title">🔥 战意分析</div>
+<div class="info" id="motivation"></div>
+</div>
+
+
+
+<div class="card">
+<div class="title">⏱ 赛程消耗</div>
+<div class="info" id="schedule"></div>
+</div>
+
+
+
+<div class="card">
+<div class="title">🔄 轮换风险</div>
+<div class="info" id="rotation"></div>
+</div>
+
+
+
+<div class="card">
 <div class="title">🤖 AI综合评分</div>
 <div class="score" id="aiScore"></div>
 </div>
@@ -247,9 +268,7 @@ document.getElementById("market").innerHTML=
 "<br>"+
 "主队："+match.market.asian_handicap.home+
 "<br>"+
-"客队："+match.market.asian_handicap.away+
-"<br><br>"+
-"大小球："+match.market.goal.line;
+"客队："+match.market.asian_handicap.away;
 
 
 
@@ -273,12 +292,7 @@ match.ai_market.analysis;
 
 
 
-// 伤停显示
-
 function showInjury(team){
-
-let result="";
-
 
 if(team.players.length==0){
 
@@ -286,23 +300,23 @@ return "无重要伤停";
 
 }
 
+let text="";
 
-team.players.forEach(function(player){
+team.players.forEach(function(p){
 
-result +=
-player.name+
-"（"+player.position+"）"+
-" 影响："+player.impact+
+text+=
+p.name+
+"（"+
+p.position+
+"）影响："+
+p.impact+
 "<br>";
 
 });
 
+text+="总影响："+team.totalImpact;
 
-result +=
-"总影响："+team.totalImpact;
-
-
-return result;
+return text;
 
 }
 
@@ -321,6 +335,47 @@ showInjury(match.injury.away);
 
 
 
+// 战意
+
+document.getElementById("motivation").innerHTML=
+
+match.home+
+"："+
+match.motivation.level+
+"（+"+
+match.motivation.impact+
+"）";
+
+
+
+
+// 赛程
+
+document.getElementById("schedule").innerHTML=
+
+"最近比赛："+
+match.schedule.recent_match+
+"<br>"+
+"疲劳影响："+
+
+match.schedule.fatigue;
+
+
+
+// 轮换
+
+document.getElementById("rotation").innerHTML=
+
+"风险："+
+match.rotation.risk+
+"<br>"+
+"影响："+
+match.rotation.impact;
+
+
+
+
+
 // AI评分
 
 let baseScore=
@@ -332,13 +387,17 @@ let baseScore=
 (match.defense.home-match.defense.away)*0.15;
 
 
+
 let finalScore=
 
 baseScore+
 match.ai_market.odds_change+
 match.ai_market.handicap_support+
 match.ai_market.heat_risk+
-match.injury.home.totalImpact;
+match.injury.home.totalImpact+
+match.motivation.impact+
+match.schedule.fatigue+
+match.rotation.impact;
 
 
 
@@ -354,7 +413,6 @@ document.getElementById("aiScore").innerHTML=
 match.home+"："+finalScore.toFixed(1)+
 "<br>"+
 match.away+"："+awayScore.toFixed(1);
-
 
 
 
@@ -382,7 +440,6 @@ document.getElementById("probability").innerHTML=
 
 document.getElementById("risk").innerHTML=
 match.risk;
-
 
 
 }
