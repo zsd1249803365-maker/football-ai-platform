@@ -16,6 +16,7 @@ font-family:Arial,sans-serif;
 background:#f3f4f6;
 }
 
+
 .header{
 background:#111827;
 color:white;
@@ -23,6 +24,7 @@ padding:25px;
 border-radius:18px;
 text-align:center;
 }
+
 
 .card{
 background:white;
@@ -32,16 +34,19 @@ border-radius:18px;
 box-shadow:0 3px 10px #ddd;
 }
 
+
 .title{
 font-size:20px;
 font-weight:bold;
 margin-bottom:15px;
 }
 
+
 .info{
 font-size:17px;
 line-height:32px;
 }
+
 
 .report{
 background:#fff7ed;
@@ -51,10 +56,12 @@ font-size:17px;
 line-height:32px;
 }
 
+
 .score{
 font-size:25px;
 font-weight:bold;
 }
+
 
 .back{
 display:block;
@@ -79,9 +86,10 @@ text-decoration:none;
 
 <h1>⚽ Football AI</h1>
 
-<p>竞彩智能分析系统 v3.0</p>
+<p>竞彩智能分析系统 v3.1</p>
 
 </div>
+
 
 
 <div class="card">
@@ -108,6 +116,20 @@ text-decoration:none;
 
 <div id="aiReport" class="report">
 正在生成分析...
+</div>
+
+</div>
+
+
+
+<div class="card">
+
+<div class="title">
+🎯 AI最终建议
+</div>
+
+<div id="aiAdvice" class="report">
+正在生成建议...
 </div>
 
 </div>
@@ -322,9 +344,9 @@ text-decoration:none;
 返回比赛列表
 </a><script>
 
-let params = new URLSearchParams(window.location.search);
+let params=new URLSearchParams(window.location.search);
 
-let game = params.get("game");
+let game=params.get("game");
 
 
 fetch("matches.json")
@@ -335,6 +357,7 @@ fetch("matches.json")
 
 
 let match=data.find(item=>item.id==game);
+
 
 
 if(!match){
@@ -393,49 +416,40 @@ document.getElementById("odds").innerHTML=
 
 document.getElementById("market").innerHTML=
 "让球："+match.market.asian_handicap.line+
-"<br>"+
-"主队："+match.market.asian_handicap.home+
-"<br>"+
-"客队："+match.market.asian_handicap.away;
+"<br>主队："+match.market.asian_handicap.home+
+"<br>客队："+match.market.asian_handicap.away;
 
 
 
 document.getElementById("marketAnalysis").innerHTML=
 "走势："+match.market_analysis.trend+
-"<br>"+
-"热度："+match.market_analysis.heat+
-"<br>"+
-"风险："+match.market_analysis.risk_note;
+"<br>热度："+match.market_analysis.heat+
+"<br>风险："+match.market_analysis.risk_note;
 
 
 
 document.getElementById("aiMarket").innerHTML=
 "赔率影响："+match.ai_market.odds_change+
-"<br>"+
-"热门风险："+match.ai_market.heat_risk+
-"<br>"+
-"盘口支持："+match.ai_market.handicap_support+
+"<br>热门风险："+match.ai_market.heat_risk+
+"<br>盘口支持："+match.ai_market.handicap_support+
 "<br><br>"+
 match.ai_market.analysis;
 
 
 
-function showInjury(team){
+function injuryText(team){
 
-if(team.players.length===0){
+if(!team.players||team.players.length==0){
 
 return "无重要伤停";
 
 }
 
+let t="";
 
-let text="";
+team.players.forEach(p=>{
 
-
-team.players.forEach(function(p){
-
-text+=
-p.name+
+t+=p.name+
 "（"+
 p.position+
 "）影响："+p.impact+
@@ -444,10 +458,7 @@ p.position+
 });
 
 
-text+="总影响："+team.totalImpact;
-
-
-return text;
+return t+"总影响："+team.totalImpact;
 
 }
 
@@ -456,73 +467,49 @@ return text;
 document.getElementById("injury").innerHTML=
 
 match.home+"：<br>"+
-showInjury(match.injury.home)+
+injuryText(match.injury.home)+
 "<br><br>"+
 match.away+"：<br>"+
-showInjury(match.injury.away);
-
+injuryText(match.injury.away);
 
 
 
 
 document.getElementById("motivation").innerHTML=
-
 match.motivation.level+
 "（影响："+match.motivation.impact+"）";
 
 
 
-
-
 document.getElementById("schedule").innerHTML=
-
 "最近比赛："+match.schedule.recent_match+
-"<br>"+
-"疲劳影响："+match.schedule.fatigue;
-
-
+"<br>疲劳："+match.schedule.fatigue;
 
 
 
 document.getElementById("rotation").innerHTML=
-
 "风险："+match.rotation.risk+
-"<br>"+
-"影响："+match.rotation.impact;
-
-
+"<br>影响："+match.rotation.impact;
 
 
 
 document.getElementById("styleMatch").innerHTML=
-
-match.home+"："+match.style_match.home_style+
-"<br>"+
-match.away+"："+match.style_match.away_style+
-"<br><br>"+
 match.style_match.matchup+
 "<br>AI修正："+match.style_match.impact;
 
 
 
-
-
 document.getElementById("marketLogic").innerHTML=
-
-"热门方向："+match.market_logic.popular_side+
-"<br>"+
-"冷门方向："+match.market_logic.cold_side+
-"<br>"+
-"庄家信号："+match.market_logic.bookmaker_signal+
-"<br>"+
-"AI市场修正："+match.market_logic.impact;
+"热门："+match.market_logic.popular_side+
+"<br>冷门："+match.market_logic.cold_side+
+"<br>庄家信号："+match.market_logic.bookmaker_signal+
+"<br>修正："+match.market_logic.impact;
 
 
 
 
 
-
-// AI综合评分
+// AI评分
 
 let score=
 
@@ -580,7 +567,6 @@ let homeProb=Math.max(5,33+diff*1.5);
 
 let awayProb=Math.max(5,33-diff*1.2);
 
-
 let drawProb=100-homeProb-awayProb;
 
 
@@ -588,12 +574,8 @@ let drawProb=100-homeProb-awayProb;
 document.getElementById("probability").innerHTML=
 
 "主胜："+homeProb.toFixed(1)+"%"+
-"<br>"+
-"平："+drawProb.toFixed(1)+"%"+
-"<br>"+
-"客胜："+awayProb.toFixed(1)+"%";
-
-
+"<br>平："+drawProb.toFixed(1)+"%"+
+"<br>客胜："+awayProb.toFixed(1)+"%";
 
 
 
@@ -604,112 +586,42 @@ match.risk;
 
 
 
-// AI赛前报告生成
-
+// AI报告
 
 let report="";
 
 
-report+=
-"本场比赛："+match.home+
+report+="本场比赛："+match.home+
 " VS "+
 match.away+
 "<br><br>";
 
 
-
-if(match.strength.home>match.strength.away){
-
 report+=
-"实力方面，"+
-match.home+
-"整体占优。";
-
-}else{
-
-report+="双方实力较为接近。";
-
-}
-
-
-
-report+="<br><br>";
-
+"实力分析："+
+(match.strength.home>match.strength.away?
+match.home+"占优。":
+"双方接近。")+
+"<br><br>";
 
 
 report+=
-"状态方面，"+
-match.home+
-"近期表现："+match.form.detail.home+
-"；"+
-match.away+
-"近期表现："+match.form.detail.away+
-"。";
-
-
-
-report+="<br><br>";
-
-
-
-report+=
-"盘口方面："+
+"盘口分析："+
 match.market_analysis.trend+
-"。";
-
-
-
-report+="<br><br>";
-
+"<br><br>";
 
 
 report+=
 "伤停影响：主队"+
 match.injury.home.totalImpact+
-"分，客队"+
+"，客队"+
 match.injury.away.totalImpact+
-"分。";
-
-
-
-report+="<br><br>";
-
+"<br><br>";
 
 
 report+=
-"战意："+match.motivation.level+
-"。";
-
-
-
-report+="<br><br>";
-
-
-
-report+=
-"比赛风格："+match.style_match.matchup;
-
-
-
-report+="<br><br>";
-
-
-
-report+=
-"市场信号："+match.market_logic.bookmaker_signal;
-
-
-
-report+="<br><br>";
-
-
-
-report+=
-"AI综合判断："+
-match.home+
-"评分 "+
-score.toFixed(1)+
-"。";
+"市场信号："+
+match.market_logic.bookmaker_signal;
 
 
 
@@ -718,8 +630,94 @@ report;
 
 
 
+
+
+
+// AI最终建议
+
+let result="";
+
+if(homeProb>awayProb&&homeProb>drawProb){
+
+result="主胜";
+
+}else if(awayProb>homeProb&&awayProb>drawProb){
+
+result="客胜";
+
+}else{
+
+result="平局";
+
+}
+
+
+
+let safe="";
+
+if(Math.abs(homeProb-awayProb)<10){
+
+safe="防平";
+
+}else if(homeProb>awayProb){
+
+safe="主队不败";
+
+}else{
+
+safe="客队不败";
+
+}
+
+
+
+let level="⭐⭐⭐";
+
+
+if(Math.abs(score-awayScore)>20){
+
+level="⭐⭐⭐⭐⭐";
+
+}else if(Math.abs(score-awayScore)>10){
+
+level="⭐⭐⭐⭐";
+
+}
+
+
+
+let advice=
+
+"胜平负倾向："+result+
+"<br><br>"+
+
+"稳健方向："+safe+
+"<br><br>"+
+
+"预测比分："+
+(score>awayScore?
+"2-1 / 1-1":
+"1-2 / 1-1")+
+"<br><br>"+
+
+"推荐等级："+level+
+"<br><br>"+
+
+"核心理由：综合实力、盘口、伤停、市场因素综合判断。";
+
+
+
+document.getElementById("aiAdvice").innerHTML=
+advice;
+
+
+
 });
 
-</script></body>
+
+</script>
+
+
+</body>
 
 </html>
