@@ -19,11 +19,13 @@ body{
 
 
 .header{
+
     background:#111827;
     color:white;
-    padding:20px;
-    border-radius:18px;
+    padding:25px;
     text-align:center;
+    border-radius:18px;
+
 }
 
 
@@ -34,6 +36,14 @@ body{
     padding:20px;
     border-radius:18px;
     box-shadow:0 3px 10px #ddd;
+    cursor:pointer;
+
+}
+
+
+.card:hover{
+
+    transform:scale(1.02);
 
 }
 
@@ -41,92 +51,52 @@ body{
 .league{
 
     color:#666;
-    font-size:14px;
 
 }
 
 
-.matc.match{
+.match{
 
     font-size:22px;
     font-weight:bold;
-    color:#111827;
-    text-decoration:none;
-}
-
-
-.ai{
-
-    line-height:30px;
-    font-size:17px;
+    margin-top:10px;
 
 }
 
 
-.button{
+a{
 
-    display:block;
-    margin-top:15px;
-    background:#111827;
-    color:white;
-    text-align:center;
-    padding:12px;
-    border-radius:12px;
     text-decoration:none;
+    color:#111;
 
 }
 
 
 </style>
 
+
 </head>
 
 
+
 <body>
+
 
 
 <div class="header">
 
 <h1>⚽ Football AI</h1>
 
-<p>今日赛事中心</p>
+<p>智能足球预测平台</p>
 
 </div>
 
 
 
-<div class="card">
 
+<div id="matches">
 
-<div class="league">
-英超 Premier League
-</div>
-
-
-<a class="match" href="match-detail.html?game=man">
-
-曼城 VS 利物浦
-
-</a>
-
-
-<div class="ai">
-
-主胜：42%<br>
-
-平局：30%<br>
-
-客胜：28%
-
-</div>
-
-
-<a class="button" href="index.html">
-
-返回首页
-
-</a>
-
+加载比赛中...
 
 </div>
 
@@ -134,46 +104,30 @@ body{
 
 
 
-<div class="card">
+
+<script>
 
 
-<div class="league">
+fetch("matches.json")
 
-西甲 La Liga
+.then(response => response.json())
 
-</div>
-
-
-<a class="match" href="match-detail.html?game=real">
-
-皇家马德里 VS 巴塞罗那
-
-</a>
-
-
-<div class="ai">
-
-主胜：45%<br>
-
-平局：27%<br>
-
-客胜：28%
-
-</div>
-
-
-<a class="button" href="index.html">
-
-返回首页
-
-</a>
-
-
-</div>
+.then(data => {
 
 
 
+let html="";
 
+
+
+data.forEach(match => {
+
+
+
+html += `
+
+
+<a href="match-detail.html?game=${match.id}">
 
 
 <div class="card">
@@ -181,37 +135,42 @@ body{
 
 <div class="league">
 
-意甲 Serie A
+${match.league}
 
 </div>
 
 
-<a class="match" href="match-detail.html?game=inter">
 
-国际米兰 VS AC米兰
+<div class="match">
+
+${match.home} VS ${match.away}
+
+</div>
+
+
+</div>
+
 
 </a>
 
 
-<div class="ai">
-
-主胜：38%<br>
-
-平局：31%<br>
-
-客胜：31%
-
-</div>
+`;
 
 
-<a class="button" href="index.html">
 
-返回首页
-
-</a>
+});
 
 
-</div>
+
+document.getElementById("matches").innerHTML=html;
+
+
+
+});
+
+
+</script>
+
 
 
 
