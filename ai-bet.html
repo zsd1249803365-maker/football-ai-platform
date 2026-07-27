@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Football AI 竞彩方案</title>
+
+
+<style>
+
+
+body{
+
+margin:0;
+padding:20px;
+font-family:Arial,sans-serif;
+background:#f3f4f6;
+
+}
+
+
+
+.header{
+
+background:#111827;
+color:white;
+padding:25px;
+border-radius:18px;
+text-align:center;
+
+}
+
+
+
+.card{
+
+background:white;
+padding:20px;
+margin-top:20px;
+border-radius:18px;
+box-shadow:0 3px 10px #ddd;
+
+}
+
+
+
+.title{
+
+font-size:20px;
+font-weight:bold;
+margin-bottom:15px;
+
+}
+
+
+
+.item{
+
+font-size:17px;
+line-height:32px;
+
+}
+
+
+
+.good{
+
+color:#16a34a;
+font-weight:bold;
+
+}
+
+
+
+.mid{
+
+color:#ca8a04;
+font-weight:bold;
+
+}
+
+
+
+.high{
+
+color:#dc2626;
+font-weight:bold;
+
+}
+
+
+
+</style>
+
+
+</head>
+
+
+<body>
+
+
+
+<div class="header">
+
+<h1>⚽ Football AI</h1>
+
+<p>竞彩智能组合生成 v3.4</p>
+
+</div>
+
+
+
+<div class="card">
+
+<div class="title">
+
+💰 输入投注金额
+
+</div>
+
+
+<div class="item">
+
+默认：
+
+100元
+
+</div>
+
+
+</div>
+
+
+
+
+<div id="safe" class="card">
+
+<div class="title">
+
+⭐ 稳健方案
+
+</div>
+
+
+</div>
+
+
+
+
+<div id="balance" class="card">
+
+<div class="title">
+
+⚖️ 平衡方案
+
+</div>
+
+
+</div>
+
+
+
+
+<div id="risk" class="card">
+
+<div class="title">
+
+🔥 博冷方案
+
+</div>
+
+
+</div><script>
+
+
+function num(v){
+
+return Number(v)||0;
+
+}
+
+
+
+function safe(obj,path,def){
+
+try{
+
+let value=path.split(".").reduce((o,k)=>o[k],obj);
+
+return value??def;
+
+}
+
+catch(e){
+
+return def;
+
+}
+
+}
+
+
+
+
+
+fetch("matches.json")
+
+.then(res=>res.json())
+
+.then(data=>{
+
+
+
+let games=[];
+
+
+
+data.forEach(function(match){
+
+
+
+let homeScore=
+
+80+
+
+(num(safe(match,"strength.home",0))-
+num(safe(match,"strength.away",0)))*0.3+
+
+(num(safe(match,"form.home",0))-
+num(safe(match,"form.away",0)))*0.2+
+
+(num(safe(match,"xg.home",0))-
+num(safe(match,"xg.away",0)))*10+
+
+(num(safe(match,"defense.home",0))-
+num(safe(match,"defense.away",0)))*0.15+
+
+num(safe(match,"ai_market.odds_change",0))+
+
+num(safe(match,"ai_market.handicap_support",0))+
+
+num(safe(match,"ai_market.heat_risk",0))+
+
+num(safe(match,"market_logic.impact",0));
+
+
+
+
+let awayScore=
+
+160-homeScore;
+
+
+
+let diff=homeScore-awayScore;
+
+
+
+let homeProb=
+
+Math.max(5,33+diff*1.5);
+
+
+
+let awayProb=
+
+Math.max(5,33-diff*1.2);
+
+
+
+let drawProb=
+
+Math.max(5,100-homeProb-awayProb);
+
+
+
+
+
+let pick="防平";
+
+
+
+if(homeProb>awayProb&&homeProb>drawProb){
+
+pick="主胜";
+
+}
+
+else if(awayProb>homeProb&&awayProb>drawProb){
+
+pick="客胜";
+
+}
+
+
+
+
+
+
+
+let riskLevel="中";
+
+
+
+let gap=Math.abs(homeProb-awayProb);
+
+
+
+if(gap>=20){
+
+riskLevel="低";
+
+}
+
+else if(gap<10){
+
+riskLevel="高";
+
+}
+
+
+
+
+
+games.push({
+
+
+id:match.id,
+
+home:match.home,
+
+away:match.away,
+
+pick:pick,
+
+score:homeScore,
+
+prob:Math.max(homeProb,awayProb,drawProb),
+
+risk:riskLevel
+
+
+});
+
+
+
+});
+
+
+
+
+
+// 按AI评分排序
+
+
+games.sort(function(a,b){
+
+return b.score-a.score;
+
+});
+
+
+
+
+
+let safeGames=[];
+
+let balanceGames=[];
+
+let riskGames=[];
+
+
+
+
+
+games.forEach(function(g){
+
+
+
+if(g.risk=="低"){
+
+safeGames.push(g);
+
+}
+
+else if(g.risk=="中"){
+
+balanceGames.push(g);
+
+}
+
+else{
+
+riskGames.push(g);
+
+}
+
+
+
+});function showGames(list){
+
+
+if(list.length==0){
+
+return "暂无推荐比赛";
+
+}
+
+
+
+let text="";
+
+
+list.slice(0,5).forEach(function(g,index){
+
+
+
+text+=
+
+(index+1)+". "+
+
+g.home+
+
+" VS "+
+
+g.away+
+
+"<br>"+
+
+"推荐："+
+
+g.pick+
+
+"<br>"+
+
+"AI评分："+
+
+g.score.toFixed(1)+
+
+"<br>"+
+
+"胜率参考："+
+
+g.prob.toFixed(1)+"%"+
+
+"<br>"+
+
+"风险："+
+
+g.risk+
+
+"<br><br>";
+
+
+
+});
+
+
+
+return text;
+
+
+}
+
+
+
+
+
+document.getElementById("safe").innerHTML=
+
+`
+
+<div class="title">
+
+⭐ 稳健方案
+
+</div>
+
+<div class="item good">
+
+${showGames(safeGames)}
+
+</div>
+
+`;
+
+
+
+
+
+document.getElementById("balance").innerHTML=
+
+`
+
+<div class="title">
+
+⚖️ 平衡方案
+
+</div>
+
+<div class="item mid">
+
+${showGames(balanceGames)}
+
+</div>
+
+`;
+
+
+
+
+
+document.getElementById("risk").innerHTML=
+
+`
+
+<div class="title">
+
+🔥 博冷方案
+
+</div>
+
+<div class="item high">
+
+${showGames(riskGames)}
+
+</div>
+
+`;
+
+
+
+
+})
+
+
+.catch(function(error){
+
+
+document.body.innerHTML+=
+
+"<p>数据读取失败："+error+"</p>";
+
+
+});
+
+
+
+</script>
+
+
+
+</body>
+
+
+</html>
