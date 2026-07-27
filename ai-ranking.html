@@ -5,16 +5,18 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Football AI 排行榜</title>
+<title>Football AI 排行榜 v3.3</title>
 
 
 <style>
 
 body{
+
 margin:0;
 padding:20px;
 font-family:Arial,sans-serif;
 background:#f3f4f6;
+
 }
 
 
@@ -29,6 +31,7 @@ text-align:center;
 }
 
 
+
 .card{
 
 background:white;
@@ -40,38 +43,53 @@ box-shadow:0 3px 10px #ddd;
 }
 
 
+
 .match{
 
-font-size:18px;
+font-size:20px;
 font-weight:bold;
 
 }
 
 
+
 .score{
 
-font-size:24px;
+font-size:28px;
 font-weight:bold;
 color:#dc2626;
 
 }
 
 
-.tag{
 
-display:inline-block;
-padding:5px 12px;
-border-radius:15px;
-background:#fef3c7;
-margin-top:10px;
+.info{
+
+font-size:17px;
+line-height:30px;
 
 }
 
 
-a{
 
+.star{
+
+font-size:22px;
+
+}
+
+
+
+.button{
+
+display:block;
+margin-top:15px;
+padding:12px;
+background:#111827;
+color:white;
+text-align:center;
+border-radius:10px;
 text-decoration:none;
-color:#2563eb;
 
 }
 
@@ -82,6 +100,7 @@ color:#2563eb;
 </head>
 
 
+
 <body>
 
 
@@ -90,16 +109,42 @@ color:#2563eb;
 
 <h1>⚽ Football AI</h1>
 
-<p>今日竞彩智能筛选 v3.3</p>
+<p>竞彩智能筛选系统 v3.3</p>
 
 </div>
 
 
 
-<div id="list"></div><div id="list"></div>
+<div id="list"></div><script>
 
 
-<script>
+function num(v){
+
+return Number(v)||0;
+
+}
+
+
+
+function safe(obj,path,def){
+
+try{
+
+let value=path.split(".").reduce((o,k)=>o[k],obj);
+
+return value??def;
+
+}
+catch(e){
+
+return def;
+
+}
+
+}
+
+
+
 
 
 fetch("matches.json")
@@ -117,35 +162,60 @@ data.forEach(match=>{
 
 
 
+let strengthHome=num(safe(match,"strength.home",0));
+
+let strengthAway=num(safe(match,"strength.away",0));
+
+
+
+let formHome=num(safe(match,"form.home",0));
+
+let formAway=num(safe(match,"form.away",0));
+
+
+
+let xgHome=num(safe(match,"xg.home",0));
+
+let xgAway=num(safe(match,"xg.away",0));
+
+
+
+let defenseHome=num(safe(match,"defense.home",0));
+
+let defenseAway=num(safe(match,"defense.away",0));
+
+
+
 let score=
 
 80+
 
-(match.strength.home-match.strength.away)*0.3+
+(strengthHome-strengthAway)*0.3+
 
-(match.form.home-match.form.away)*0.2+
+(formHome-formAway)*0.2+
 
-(match.xg.home-match.xg.away)*10+
+(xgHome-xgAway)*10+
 
-(match.defense.home-match.defense.away)*0.15+
+(defenseHome-defenseAway)*0.15+
 
-match.ai_market.odds_change+
+num(safe(match,"ai_market.odds_change",0))+
 
-match.ai_market.handicap_support+
+num(safe(match,"ai_market.handicap_support",0))+
 
-match.ai_market.heat_risk+
+num(safe(match,"ai_market.heat_risk",0))+
 
-match.injury.home.totalImpact+
+num(safe(match,"injury.home.totalImpact",0))+
 
-match.motivation.impact+
+num(safe(match,"motivation.impact",0))+
 
-match.schedule.fatigue+
+num(safe(match,"schedule.fatigue",0))+
 
-match.rotation.impact+
+num(safe(match,"rotation.impact",0))+
 
-match.style_match.impact+
+num(safe(match,"style_match.impact",0))+
 
-match.market_logic.impact;
+num(safe(match,"market_logic.impact",0));
+
 
 
 
@@ -153,7 +223,10 @@ match.market_logic.impact;
 let awayScore=
 
 160-score+
-match.injury.away.totalImpact;
+
+num(safe(match,"injury.away.totalImpact",0));
+
+
 
 
 
@@ -175,12 +248,13 @@ Math.max(5,33-diff*1.2);
 
 let drawProb=
 
-100-homeProb-awayProb;
+Math.max(5,100-homeProb-awayProb);
 
 
 
 
-let pick="";
+
+let pick="防平";
 
 
 
@@ -196,64 +270,64 @@ pick="客胜";
 
 }
 
-else{
 
-pick="防平";
+
+
+
+
+
+let risk="中";
+
+
+
+let gap=Math.abs(homeProb-awayProb);
+
+
+
+if(gap>=20){
+
+risk="低";
+
+}
+
+else if(gap<10){
+
+risk="高";
 
 }
 
 
 
 
-let risk="";
+
+let star="⭐⭐⭐";
 
 
-if(Math.abs(homeProb-awayProb)<10){
 
-risk="高风险";
+if(score-awayScore>20){
 
-}
-
-else if(Math.abs(homeProb-awayProb)<20){
-
-risk="中风险";
+star="⭐⭐⭐⭐⭐";
 
 }
 
-else{
+else if(score-awayScore>10){
 
-risk="低风险";
+star="⭐⭐⭐⭐";
 
 }
 
 
-
-
-let level="⭐⭐⭐";
-
-
-if(score>awayScore+20){
-
-level="⭐⭐⭐⭐⭐";
-
-}
-
-else if(score>awayScore+10){
-
-level="⭐⭐⭐⭐";
-
-}
 
 
 
 
 result.push({
 
-id:match.id,
+id:match.id||"",
 
-home:match.home,
+home:match.home||"未知",
 
-away:match.away,
+away:match.away||"未知",
 
 score:score,
 
@@ -261,7 +335,7 @@ pick:pick,
 
 risk:risk,
 
-level:level
+star:star
 
 });
 
@@ -271,9 +345,6 @@ level:level
 
 
 
-
-
-// AI评分排序
 
 
 result.sort(function(a,b){
@@ -290,76 +361,74 @@ let html="";
 
 
 
+
+
 result.forEach(function(item,index){
 
 
 
-html+=
+html+=`
 
-'<div class="card">'+
+<div class="card">
 
 
-'<div class="match">'+
+<div class="match">
 
-(index+1)+". "+
+${index+1}. ${item.home} VS ${item.away}
 
-item.home+
-
-" VS "+
-
-item.away+
-
-'</div>'+
+</div>
 
 
 
-'<p>AI评分：</p>'+
+<div class="info">
 
-'<div class="score">'+
+AI评分：
 
-item.score.toFixed(1)+
-
-'</div>'+
+</div>
 
 
+<div class="score">
 
-'<p>推荐：'+
+${item.score.toFixed(1)}
 
-item.pick+
-
-'</p>'+
+</div>
 
 
 
-'<p>风险：'+
+<div class="info">
 
-item.risk+
+推荐：${item.pick}
 
-'</p>'+
+<br>
+
+风险：${item.risk}
+
+<br>
+
+推荐等级：
+
+<span class="star">
+
+${item.star}
+
+</span>
 
 
-
-'<div class="tag">'+
-
-item.level+
-
-'</div>'+
-
-
-
-'<br><br>'+
-
-
-
-'<a href="match-detail.html?game='+
-
-item.id+
-
-'">查看详细分析</a>'+
+</div>
 
 
 
-'</div>';
+<a class="button" href="match-detail.html?game=${item.id}">
+
+查看详细分析
+
+</a>
+
+
+
+</div>
+
+`;
 
 
 
@@ -367,21 +436,23 @@ item.id+
 
 
 
+
+document.getElementById("list").innerHTML=html;
+
+
+
+})
+
+.catch(function(error){
 
 
 document.getElementById("list").innerHTML=
-html;
+
+"<div class='card'>读取比赛数据失败："+error+"</div>";
 
 
-
-});
-
-
-
-</script>
-
+});</script>
 
 </body>
-
 
 </html>
