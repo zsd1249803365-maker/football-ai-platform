@@ -35,6 +35,7 @@
       "away": 3.90
     },
 
+
     "prediction": {
       "home_win": "42%",
       "draw": "30%",
@@ -42,16 +43,40 @@
       "score": "1-1"
     },
 
-    "ai": {
-      "strength_weight": 30,
-      "form_weight": 20,
-      "xg_weight": 25,
-      "defense_weight": 15,
-      "market_weight": 10
+
+    "market": {
+
+      "asian_handicap": {
+        "line": "-1",
+        "home": "让胜",
+        "away": "让负"
+      },
+
+      "goal": {
+        "line": "2.5",
+        "over": "大",
+        "under": "小"
+      },
+
+      "opening": {
+        "home": "1.85",
+        "draw": "3.60",
+        "away": "3.90"
+      },
+
+      "current": {
+        "home": "1.80",
+        "draw": "3.55",
+        "away": "4.10"
+      }
+
     },
 
+
     "risk": "中等"
+
   },
+
 
 
   {
@@ -90,6 +115,7 @@
       "away": 3.20
     },
 
+
     "prediction": {
       "home_win": "45%",
       "draw": "27%",
@@ -97,16 +123,40 @@
       "score": "2-1"
     },
 
-    "ai": {
-      "strength_weight": 30,
-      "form_weight": 20,
-      "xg_weight": 25,
-      "defense_weight": 15,
-      "market_weight": 10
+
+    "market": {
+
+      "asian_handicap": {
+        "line": "-0.5",
+        "home": "让胜",
+        "away": "让负"
+      },
+
+      "goal": {
+        "line": "2.5",
+        "over": "大",
+        "under": "小"
+      },
+
+      "opening": {
+        "home": "2.10",
+        "draw": "3.50",
+        "away": "3.20"
+      },
+
+      "current": {
+        "home": "2.00",
+        "draw": "3.60",
+        "away": "3.35"
+      }
+
     },
 
+
     "risk": "较高"
+
   },
+
 
 
   {
@@ -145,6 +195,7 @@
       "away": 3.60
     },
 
+
     "prediction": {
       "home_win": "38%",
       "draw": "31%",
@@ -152,14 +203,38 @@
       "score": "1-0"
     },
 
-    "ai": {
-      "strength_weight": 30,
-      "form_weight": 20,
-      "xg_weight": 25,
-      "defense_weight": 15,
-      "market_weight": 10
+
+    "market": {
+
+      "asian_handicap": {
+        "line": "-0.5",
+        "home": "让胜",
+        "away": "让负"
+      },
+
+      "goal": {
+        "line": "2.5",
+        "over": "大",
+        "under": "小"
+      },
+
+      "opening": {
+        "home": "2.00",
+        "draw": "3.30",
+        "away": "3.60"
+      },
+
+      "current": {
+        "home": "1.95",
+        "draw": "3.35",
+        "away": "3.75"
+      }
+
     },
 
+
     "risk": "低"
+
   }
+
 ]
