@@ -170,6 +170,13 @@ text-decoration:none;
 
 
 <div class="card">
+<div class="title">🎯 风格对抗分析</div>
+<div class="info" id="styleMatch"></div>
+</div>
+
+
+
+<div class="card">
 <div class="title">🤖 AI综合评分</div>
 <div class="score" id="aiScore"></div>
 </div>
@@ -198,11 +205,9 @@ text-decoration:none;
 
 <script>
 
-
 let params=new URLSearchParams(window.location.search);
 
 let game=params.get("game");
-
 
 
 fetch("matches.json")
@@ -213,7 +218,6 @@ fetch("matches.json")
 
 
 let match=data.find(item=>item.id==game);
-
 
 
 if(match){
@@ -295,9 +299,7 @@ match.ai_market.analysis;
 function showInjury(team){
 
 if(team.players.length==0){
-
 return "无重要伤停";
-
 }
 
 let text="";
@@ -308,8 +310,7 @@ text+=
 p.name+
 "（"+
 p.position+
-"）影响："+
-p.impact+
+"）影响："+p.impact+
 "<br>";
 
 });
@@ -319,7 +320,6 @@ text+="总影响："+team.totalImpact;
 return text;
 
 }
-
 
 
 document.getElementById("injury").innerHTML=
@@ -334,9 +334,6 @@ showInjury(match.injury.away);
 
 
 
-
-// 战意
-
 document.getElementById("motivation").innerHTML=
 
 match.home+
@@ -348,35 +345,38 @@ match.motivation.impact+
 
 
 
-
-// 赛程
-
 document.getElementById("schedule").innerHTML=
 
 "最近比赛："+
 match.schedule.recent_match+
 "<br>"+
-"疲劳影响："+
-
-match.schedule.fatigue;
+"疲劳影响："+match.schedule.fatigue;
 
 
-
-// 轮换
 
 document.getElementById("rotation").innerHTML=
 
 "风险："+
 match.rotation.risk+
 "<br>"+
-"影响："+
-match.rotation.impact;
+"影响："+match.rotation.impact;
 
 
 
+document.getElementById("styleMatch").innerHTML=
+
+match.home+
+"打法："+match.style_match.home_style+
+"<br>"+
+match.away+
+"打法："+match.style_match.away_style+
+"<br><br>"+
+"风格分析："+
+match.style_match.matchup+
+"<br>"+
+"AI风格修正："+match.style_match.impact;
 
 
-// AI评分
 
 let baseScore=
 
@@ -397,7 +397,8 @@ match.ai_market.heat_risk+
 match.injury.home.totalImpact+
 match.motivation.impact+
 match.schedule.fatigue+
-match.rotation.impact;
+match.rotation.impact+
+match.style_match.impact;
 
 
 
@@ -413,7 +414,6 @@ document.getElementById("aiScore").innerHTML=
 match.home+"："+finalScore.toFixed(1)+
 "<br>"+
 match.away+"："+awayScore.toFixed(1);
-
 
 
 
