@@ -1,71 +1,112 @@
 /**
- * API-Football 免费计划实际限制（实测）：
- * - 无 next / last 参数
- * - 赛季仅 2022-2024
- * - 可用: league + season + date  或  league + season（整季可能很大）
+ * 从澳客网抓取竞彩足球开售赛程 + 赔率
+ * 数据源: https://www.okooo.com/jingcai/
+ * 无需 API Key，免费
  */
 
-const LEAGUES = [
-  { id: 39, name: "英超" },
-  { id: 140, name: "西甲" },
-  { id: 135, name: "意甲" },
-  { id: 78, name: "德甲" },
-  { id: 61, name: "法甲" },
-];
+function parseOkoooHtml(html) {
+  const matches = [];
+  // 粗解析：按场次块切分（编号 3 位数字开头）
+  // 结构大致：编号、联赛、时间、主队、赔率、客队、让球盘…
+  const blocks = html.split(/(?=\d{3}\s*<)/);
 
-// 2023-24 赛季末尾几轮的日期（有比赛）
-const SAMPLE_DATES = [
-  "2024-05-19",
-  "2024-05-18",
-  "2024-05-12",
-  "2024-05-11",
-  "2024-05-05",
-];
+  // 更稳：用正则抓「编号 + 联赛 + 时间 + 主客 + 赔率」
+  // 页面文本化后的模式（open_page 已验证存在）
+  const text = html
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<[^>]+>/g, "\n")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\n+/g, "\n");
 
-async function apiGet(path, key) {
-  const res = await fetch(`https://v3.football.api-sports.io${path}`, {
-    headers: { "x-apisports-key": key },
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const msg = json?.errors ? JSON.stringify(json.errors) : `HTTP ${res.status}`;
-    throw new Error(msg);
+  const lines = text
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  // 找类似: 201 瑞典超 / 22:00 / 赫根 / 1.75 / 3.75 / 3.43 / 索尔纳
+  for (let i = 0; i < lines.length; i++) {
+    const codeMatch = lines[i].match(/^(\d{3})$/);
+    if (!codeMatch) continue;
+    const code = codeMatch[1];
+
+    // 往后扫若干行拼一场
+    const window = lines.slice(i, i + 20);
+    const leagueLine = window.find((l, idx) => idx > 0 && /超|甲|乙|杯|联|冠|友谊|锦标赛|联赛|瑞典|挪威|芬兰|中超|英|西|意|德|法|日|韩|美|巴|阿/.test(l) && l.length < 20);
+    const timeLine = window.find((l) => /^\d{1,2}:\d{2}$/.test(l));
+    const odds = [];
+    for (const l of window) {
+      if (/^\d+\.\d{2}$/.test(l)) odds.push(parseFloat(l));
+    }
+
+    // 队名：不含纯数字、不含赔率格式、长度合适
+    const nameCandidates = window.filter(
+      (l) =>
+        l.length >= 2 &&
+        l.length <= 16 &&
+        !/^\d/.test(l) &&
+        !/^\d+\.\d+$/.test(l) &&
+        !/胜|平|负|让球|全选|反选|指数|开赛|截止|主|客|数据|最低/.test(l) &&
+        l !== leagueLine
+    );
+
+    if (!leagueLine || nameCandidates.length < 2) continue;
+
+    const home = nameCandidates[0];
+    const away = nameCandidates[1];
+    const homeOdd = odds[0] || 2.1;
+    const drawOdd = odds[1] || 3.3;
+    const awayOdd = odds[2] || 3.4;
+
+    // 避免重复
+    if (matches.some((m) => m.id === code || (m.home === home && m.away === away))) continue;
+
+    matches.push({
+      code,
+      league: leagueLine.replace(/\[|\]/g, "").trim(),
+      time: timeLine || "",
+      home,
+      away,
+      odds: { home: homeOdd, draw: drawOdd, away: awayOdd },
+    });
   }
-  return json;
+
+  return matches;
 }
 
-function mapFixture(f, odds) {
-  const home = f.teams?.home?.name || "主队";
-  const away = f.teams?.away?.name || "客队";
-  const fid = String(f.fixture?.id || Math.random());
-  const od = odds || { home: 2.1, draw: 3.3, away: 3.4 };
-
+function mapMatch(m) {
+  const { home, away, odds: od, league, time, code } = m;
   const invH = 1 / (od.home || 2.1);
   const invD = 1 / (od.draw || 3.3);
   const invA = 1 / (od.away || 3.4);
   const sum = invH + invD + invA || 1;
   const pH = invH / sum;
   const pA = invA / sum;
-
   const strengthHome = Math.round(70 + pH * 30);
   const strengthAway = Math.round(70 + pA * 30);
   const heat = od.home < 1.55 ? "高" : od.home < 2.15 ? "中" : "低";
   const heatRisk = heat === "高" ? -2 : heat === "中" ? -1 : 0;
-  const status = f.fixture?.status?.short || "NS";
+
+  // 拼一个 kickoff（只有时分时用今天日期）
+  let kickoff = "";
+  if (time) {
+    const today = new Date().toISOString().slice(0, 10);
+    kickoff = `${today}T${time}:00+08:00`;
+  }
 
   return {
-    id: fid,
-    league: f.league?.name || "联赛",
+    id: code || String(Math.random()).slice(2, 10),
+    league: league || "竞彩",
     home,
     away,
-    kickoff: f.fixture?.date || "",
-    status,
-    score: f.goals ? `${f.goals.home ?? "-"}-${f.goals.away ?? "-"}` : null,
+    kickoff,
+    status: "NS",
     strength: { home: strengthHome, away: strengthAway },
     form: {
       home: strengthHome - 5,
       away: strengthAway - 5,
-      detail: { home: "2024赛季数据", away: "2024赛季数据" },
+      detail: { home: "竞彩开售", away: "竞彩开售" },
     },
     xg: {
       home: +(1.1 + pH * 1.2).toFixed(2),
@@ -78,33 +119,33 @@ function mapFixture(f, odds) {
       goal: { line: "2.5", over: "大", under: "小" },
     },
     market_analysis: {
-      trend: "2023-24赛季历史数据（免费计划限制）",
+      trend: "竞彩开售（澳客）",
       heat,
-      risk_note: heat === "高" ? "热门过热" : "热度正常",
+      risk_note: heat === "高" ? "热门过热，注意防冷" : "市场热度正常",
     },
     ai_market: {
       odds_change: 0,
       heat_risk: heatRisk,
       handicap_support: pH > 0.45 ? 1 : pA > 0.4 ? -1 : 0,
-      analysis: `${home} vs ${away} · 主${od.home} 平${od.draw} 客${od.away}`,
+      analysis: `${home} vs ${away}，竞彩主胜 ${od.home} / 平 ${od.draw} / 客 ${od.away}`,
     },
     injury: {
       home: { players: [], totalImpact: 0 },
       away: { players: [], totalImpact: 0 },
     },
-    motivation: { level: "联赛", impact: 2 },
+    motivation: { level: "竞彩", impact: 3 },
     schedule: { recent_match: "-", fatigue: 0 },
     rotation: { risk: "未知", impact: 0 },
     style_match: {
       home_style: "-",
       away_style: "-",
-      matchup: "基于赔率估算",
+      matchup: "基于竞彩奖金估算",
       impact: 0,
     },
     market_logic: {
       popular_side: pH > pA ? "主胜" : "客胜",
       cold_side: "平局",
-      bookmaker_signal: "API-Football",
+      bookmaker_signal: "竞彩固定奖金",
       impact: heatRisk,
     },
     prediction: {
@@ -114,114 +155,75 @@ function mapFixture(f, odds) {
       score: pH > 0.45 ? "2-1" : pA > 0.4 ? "1-2" : "1-1",
     },
     risk: heat === "高" ? "较高" : "中等",
-    source: "api",
+    source: "jingcai",
   };
 }
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Cache-Control", "s-maxage=600, stale-while-revalidate=1200");
+  res.setHeader("Cache-Control", "s-maxage=180, stale-while-revalidate=300");
   if (req.method === "OPTIONS") return res.status(200).end();
-
-  const key = process.env.API_FOOTBALL_KEY;
-  if (!key) {
-    return res.status(200).json({ ok: false, reason: "missing_key", matches: [] });
-  }
 
   const debug = [];
   try {
-    const leagueParam = req.query?.league;
-    let targets = LEAGUES.slice(0, 2); // 控制请求次数
-    if (leagueParam) {
-      const hit = LEAGUES.filter(
-        (l) => l.name === leagueParam || String(l.id) === leagueParam
+    // 今天 + 昨天（竞彩跨日）
+    const dates = [];
+    const now = new Date();
+    for (let d = 0; d <= 2; d++) {
+      const t = new Date(now.getTime() - d * 864e5);
+      dates.push(t.toISOString().slice(0, 10));
+    }
+
+    let parsed = [];
+    for (const date of dates) {
+      const url =
+        date === dates[0]
+          ? "https://www.okooo.com/jingcai/"
+          : `https://www.okooo.com/jingcai/${date}/`;
+      try {
+        const r = await fetch(url, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15",
+            Accept: "text/html,application/xhtml+xml",
+            "Accept-Language": "zh-CN,zh;q=0.9",
+          },
+        });
+        if (!r.ok) {
+          debug.push({ date, status: r.status });
+          continue;
+        }
+        const html = await r.text();
+        const list = parseOkoooHtml(html);
+        debug.push({ date, n: list.length });
+        for (const m of list) {
+          if (!parsed.some((x) => x.code === m.code && x.home === m.home)) {
+            parsed.push(m);
+          }
+        }
+      } catch (e) {
+        debug.push({ date, err: String(e.message || e) });
+      }
+    }
+
+    let matches = parsed.map(mapMatch);
+
+    // 联赛筛选（前端传来的中文名）
+    const leagueFilter = req.query?.league;
+    if (leagueFilter) {
+      matches = matches.filter(
+        (m) => m.league === leagueFilter || String(m.league).includes(leagueFilter)
       );
-      if (hit.length) targets = hit.slice(0, 2);
     }
-
-    const raw = [];
-    const seen = new Set();
-
-    // 每个联赛试 2 个日期，最多约 4 次请求
-    for (const lg of targets) {
-      for (const date of SAMPLE_DATES.slice(0, 2)) {
-        try {
-          const d = await apiGet(
-            `/fixtures?league=${lg.id}&season=2023&date=${date}`,
-            key
-          );
-          // 也试 2024 season
-          let list = d?.response || [];
-          if (!list.length) {
-            const d2 = await apiGet(
-              `/fixtures?league=${lg.id}&season=2024&date=${date}`,
-              key
-            );
-            list = d2?.response || [];
-            debug.push({ league: lg.name, date, season: 2024, n: list.length, errors: d2?.errors });
-          } else {
-            debug.push({ league: lg.name, date, season: 2023, n: list.length });
-          }
-          for (const f of list) {
-            const id = String(f.fixture?.id || "");
-            if (id && !seen.has(id)) {
-              seen.add(id);
-              raw.push(f);
-            }
-          }
-          if (raw.length >= 12) break;
-        } catch (e) {
-          debug.push({ league: lg.name, date, err: String(e.message) });
-        }
-      }
-      if (raw.length >= 12) break;
-    }
-
-    // 兜底：不带 date，只 league+season（可能返回较多，截断）
-    if (!raw.length) {
-      try {
-        const d = await apiGet(`/fixtures?league=39&season=2023`, key);
-        const list = (d?.response || []).slice(-15);
-        debug.push({ step: "epl-full-2023", n: list.length, errors: d?.errors });
-        raw.push(...list);
-      } catch (e) {
-        debug.push({ step: "epl-full", err: String(e.message) });
-      }
-    }
-
-    let sampleOdds = null;
-    const fid = raw[0]?.fixture?.id;
-    if (fid) {
-      try {
-        const d = await apiGet(`/odds?fixture=${fid}`, key);
-        const bet = d?.response?.[0]?.bookmakers?.[0]?.bets?.find(
-          (b) => b.name === "Match Winner" || b.id === 1
-        );
-        if (bet?.values) {
-          const h = bet.values.find((v) => /Home|1/i.test(String(v.value)));
-          const dr = bet.values.find((v) => /Draw|X/i.test(String(v.value)));
-          const a = bet.values.find((v) => /Away|2/i.test(String(v.value)));
-          sampleOdds = {
-            home: parseFloat(h?.odd) || 2.1,
-            draw: parseFloat(dr?.odd) || 3.3,
-            away: parseFloat(a?.odd) || 3.4,
-          };
-          debug.push({ odds: "ok" });
-        }
-      } catch (e) {
-        debug.push({ odds: String(e.message) });
-      }
-    }
-
-    const matches = raw
-      .map((f, i) => mapFixture(f, i === 0 ? sampleOdds : null))
-      .sort((a, b) => String(b.kickoff).localeCompare(String(a.kickoff)));
 
     return res.status(200).json({
-      ok: true,
+      ok: matches.length > 0,
       count: matches.length,
+      source: "okooo-jingcai",
       note:
-        "免费计划无法获取未来赛程（无 next/last）。当前展示 2023/2024 赛季真实历史比赛用于演示。升级付费可获实时赛程与赔率。",
+        matches.length > 0
+          ? "数据来自澳客网竞彩开售列表（与竞彩网同步）"
+          : "今日暂无开售或页面结构变化，已回退本地数据",
       updatedAt: new Date().toISOString(),
       debug,
       matches,
@@ -229,7 +231,7 @@ export default async function handler(req, res) {
   } catch (err) {
     return res.status(200).json({
       ok: false,
-      reason: "api_error",
+      reason: "scrape_error",
       message: String(err.message || err),
       debug,
       matches: [],
