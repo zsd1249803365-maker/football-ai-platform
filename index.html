@@ -8,7 +8,7 @@
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v4.0</span></h1>
+    <h1>⚽ Football AI <span class="version">v4.1</span></h1>
     <p>竞彩智能分析系统 · 多维数据驱动</p>
   </div>
 
@@ -22,9 +22,14 @@
   <div class="container">
     <div class="card">
       <div class="card-title">🚀 系统入口</div>
-      <a class="btn btn-primary" href="matches.html">⚽ 比赛列表</a>
+      <a class="btn btn-primary" href="matches.html">⚽ 比赛列表（支持筛选）</a>
       <a class="btn btn-success" href="ai-ranking.html">📊 AI 排行榜</a>
       <a class="btn btn-warning" href="ai-bet.html">🎫 竞彩方案</a>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📡 数据状态</div>
+      <div id="dataStatus" class="info" style="font-size:0.9rem;color:var(--text-muted)">检测中...</div>
     </div>
 
     <div class="card">
@@ -45,6 +50,8 @@
     loadMatches()
       .then(data => {
         const results = analyzeAll(data);
+        const src = window.__DATA_SOURCE__ === "api" ? "🟢 实时 API 数据" : "🟡 本地示例数据（配置 API Key 后可切换实时）";
+        document.getElementById("dataStatus").textContent = src + ` · ${results.length} 场比赛`;
 
         const homeCount = results.filter(r => r.pickSide === "home").length;
         const drawCount = results.filter(r => r.pickSide === "draw").length;
@@ -54,7 +61,7 @@
           <div class="stats-row">
             <div class="stat-box">
               <div class="num">${results.length}</div>
-              <div class="label">今日比赛</div>
+              <div class="label">比赛数</div>
             </div>
             <div class="stat-box">
               <div class="num" style="color:var(--success)">${homeCount}</div>
@@ -72,11 +79,11 @@
         `;
 
         let html = "";
-        results.slice(0, 3).forEach((g, i) => {
+        results.slice(0, 5).forEach((g, i) => {
           html += `
             <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
               <div class="match-name">${i + 1}. ${g.home} vs ${g.away}</div>
-              <div class="match-league">${g.league}</div>
+              <div class="match-league">${g.league}${g.kickoff ? " · " + formatKickoff(g.kickoff) : ""}</div>
               <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px">
                 <span class="score-big" style="font-size:1.4rem">${g.homeScore}</span>
                 <span class="badge ${pickBadgeClass(g.pickSide)}">${g.pick}</span>
@@ -90,7 +97,8 @@
         document.getElementById("topGames").innerHTML = html || "暂无数据";
       })
       .catch(err => {
-        document.getElementById("statistics").innerHTML = `<div class="report danger">数据读取失败：${err.message}</div>`;
+        document.getElementById("dataStatus").textContent = "数据加载失败";
+        document.getElementById("statistics").innerHTML = `<div class="report danger">${err.message}</div>`;
         document.getElementById("topGames").innerHTML = "";
       });
   </script>

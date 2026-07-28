@@ -1,6 +1,6 @@
 /**
- * Football AI Scoring Engine v4.0
- * Unified algorithm used across all pages
+ * Football AI Scoring Engine v4.1
+ * 支持真实 API 数据 + 本地回退 + 筛选
  */
 
 function num(v) {
@@ -17,10 +17,6 @@ function safe(obj, path, def = 0) {
   }
 }
 
-/**
- * Core scoring function
- * Returns a comprehensive analysis object for one match
- */
 function analyzeMatch(match) {
   const strengthHome = num(safe(match, "strength.home", 75));
   const strengthAway = num(safe(match, "strength.away", 75));
@@ -68,7 +64,6 @@ function analyzeMatch(match) {
     styleImpact;
 
   homeScore = Math.max(35, Math.min(125, homeScore));
-
   let awayScore = 160 - homeScore + injuryAway * 0.4;
   awayScore = Math.max(35, Math.min(125, awayScore));
 
@@ -129,6 +124,7 @@ function analyzeMatch(match) {
     home: match.home || "主队",
     away: match.away || "客队",
     league: match.league || "未知",
+    kickoff: match.kickoff || "",
     homeScore: Math.round(homeScore * 10) / 10,
     awayScore: Math.round(awayScore * 10) / 10,
     homeProb: Math.round(homeProb * 10) / 10,
@@ -142,7 +138,9 @@ function analyzeMatch(match) {
     starStr,
     predScore,
     maxProb: Math.round(maxProb * 10) / 10,
-    raw: match
+    odds: match.odds || null,
+    source: match.source || "local",
+    raw: match,
   };
 }
 
@@ -150,16 +148,34 @@ function analyzeAll(matches) {
   return matches.map(analyzeMatch).sort((a, b) => b.homeScore - a.homeScore);
 }
 
-async function loadMatches() {
+/** 优先 API，失败回退 matches.json */
+async function loadMatches(leagueFilter) {
+  // 1. 尝试真实 API
   try {
-    const res = await fetch("matches.json?t=" + Date.now());
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    return Array.isArray(data) ? data : [];
-  } catch (err) {
-    console.error("数据加载失败:", err);
-    throw err;
+    const q = leagueFilter ? `?league=${encodeURIComponent(leagueFilter)}` : "";
+    const res = await fetch(`/api/fixtures${q}&t=` + Date.now());
+    if (res.ok) {
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.matches) && data.matches.length > 0) {
+        window.__DATA_SOURCE__ = "api";
+        window.__DATA_UPDATED__ = data.updatedAt;
+        return data.matches;
+      }
+    }
+  } catch (e) {
+    console.warn("API 不可用，使用本地数据", e);
   }
+
+  // 2. 本地回退
+  const res = await fetch("matches.json?t=" + Date.now());
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const data = await res.json();
+  let list = Array.isArray(data) ? data : [];
+  if (leagueFilter) {
+    list = list.filter((m) => m.league === leagueFilter);
+  }
+  window.__DATA_SOURCE__ = "local";
+  return list;
 }
 
 function pickBadgeClass(side) {
@@ -172,4 +188,19 @@ function riskBadgeClass(level) {
   if (level === "low") return "badge-risk-low";
   if (level === "high") return "badge-risk-high";
   return "badge-risk-mid";
+}
+
+function formatKickoff(iso) {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString("zh-CN", {
+      month: "numeric",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
 }

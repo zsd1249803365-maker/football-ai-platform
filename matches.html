@@ -5,11 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>比赛列表 - Football AI</title>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .filter-btn {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      background: var(--primary-glow);
+      color: var(--primary);
+      border-color: rgba(59,130,246,0.4);
+    }
+    .source-tag {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+  </style>
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v4.0</span></h1>
-    <p>比赛列表</p>
+    <h1>⚽ Football AI <span class="version">v4.1</span></h1>
+    <p>比赛列表 · 支持实时数据</p>
   </div>
 
   <nav class="nav">
@@ -20,6 +48,25 @@
   </nav>
 
   <div class="container">
+    <div class="source-tag" id="sourceTag">数据来源加载中...</div>
+
+    <div class="filters" id="leagueFilters">
+      <button class="filter-btn active" data-league="">全部</button>
+      <button class="filter-btn" data-league="英超">英超</button>
+      <button class="filter-btn" data-league="西甲">西甲</button>
+      <button class="filter-btn" data-league="意甲">意甲</button>
+      <button class="filter-btn" data-league="德甲">德甲</button>
+      <button class="filter-btn" data-league="法甲">法甲</button>
+      <button class="filter-btn" data-league="欧冠">欧冠</button>
+    </div>
+
+    <div class="filters" id="riskFilters">
+      <button class="filter-btn active" data-risk="">全部风险</button>
+      <button class="filter-btn" data-risk="low">低风险</button>
+      <button class="filter-btn" data-risk="mid">中风险</button>
+      <button class="filter-btn" data-risk="high">高风险</button>
+    </div>
+
     <div id="list" class="loading">正在加载比赛...</div>
   </div>
 
@@ -27,41 +74,90 @@
 
   <script src="js/score.js"></script>
   <script>
-    loadMatches()
-      .then(data => {
-        const results = analyzeAll(data);
-        let html = "";
+    let allResults = [];
+    let currentLeague = "";
+    let currentRisk = "";
 
-        results.forEach(g => {
-          html += `
-            <div class="card">
-              <div class="match-name">${g.home} vs ${g.away}</div>
-              <div class="match-league">${g.league} · ID: ${g.id}</div>
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0">
-                <span class="badge ${pickBadgeClass(g.pickSide)}">${g.pick}</span>
-                <span class="badge ${riskBadgeClass(g.riskLevel)}">风险${g.risk}</span>
-                <span class="stars">${g.starStr}</span>
-              </div>
-              <div class="info-grid">
-                <div class="info-item">
-                  <div class="label">AI 评分</div>
-                  <div class="value">${g.homeScore}</div>
-                </div>
-                <div class="info-item">
-                  <div class="label">主胜概率</div>
-                  <div class="value">${g.homeProb}%</div>
-                </div>
-              </div>
-              <a class="btn btn-dark" href="match-detail.html?game=${g.id}">查看 AI 详细分析</a>
+    function render() {
+      let list = allResults;
+      if (currentLeague) list = list.filter(g => g.league === currentLeague);
+      if (currentRisk) list = list.filter(g => g.riskLevel === currentRisk);
+
+      if (!list.length) {
+        document.getElementById("list").innerHTML = `<div class="card"><div class="report">暂无符合条件的比赛</div></div>`;
+        return;
+      }
+
+      let html = "";
+      list.forEach(g => {
+        const oddsText = g.odds
+          ? `主 ${g.odds.home} / 平 ${g.odds.draw} / 客 ${g.odds.away}`
+          : "";
+        html += `
+          <div class="card">
+            <div class="match-name">${g.home} vs ${g.away}</div>
+            <div class="match-league">${g.league}${g.kickoff ? " · " + formatKickoff(g.kickoff) : ""}</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0">
+              <span class="badge ${pickBadgeClass(g.pickSide)}">${g.pick}</span>
+              <span class="badge ${riskBadgeClass(g.riskLevel)}">风险${g.risk}</span>
+              <span class="stars">${g.starStr}</span>
             </div>
-          `;
-        });
-
-        document.getElementById("list").innerHTML = html || "<div class=\"card\">暂无比赛数据</div>";
-      })
-      .catch(err => {
-        document.getElementById("list").innerHTML = `<div class="card"><div class="report danger">读取失败：${err.message}</div></div>`;
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="label">AI 评分</div>
+                <div class="value">${g.homeScore}</div>
+              </div>
+              <div class="info-item">
+                <div class="label">主胜概率</div>
+                <div class="value">${g.homeProb}%</div>
+              </div>
+            </div>
+            ${oddsText ? `<div style="font-size:0.8rem;color:var(--text-muted);margin-top:8px">赔率：${oddsText}</div>` : ""}
+            <a class="btn btn-dark" href="match-detail.html?game=${g.id}">查看 AI 详细分析</a>
+          </div>
+        `;
       });
+      document.getElementById("list").innerHTML = html;
+    }
+
+    function bindFilters() {
+      document.querySelectorAll("#leagueFilters .filter-btn").forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll("#leagueFilters .filter-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentLeague = btn.dataset.league;
+          load(currentLeague);
+        };
+      });
+      document.querySelectorAll("#riskFilters .filter-btn").forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll("#riskFilters .filter-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentRisk = btn.dataset.risk;
+          render();
+        };
+      });
+    }
+
+    function load(league) {
+      document.getElementById("list").innerHTML = `<div class="loading">正在加载...</div>`;
+      loadMatches(league || undefined)
+        .then(data => {
+          allResults = analyzeAll(data);
+          const src = window.__DATA_SOURCE__ === "api" ? "🟢 实时 API" : "🟡 本地示例数据";
+          const time = window.__DATA_UPDATED__
+            ? " · 更新于 " + new Date(window.__DATA_UPDATED__).toLocaleString("zh-CN")
+            : "";
+          document.getElementById("sourceTag").textContent = src + time + ` · 共 ${allResults.length} 场`;
+          render();
+        })
+        .catch(err => {
+          document.getElementById("list").innerHTML = `<div class="card"><div class="report danger">读取失败：${err.message}</div></div>`;
+        });
+    }
+
+    bindFilters();
+    load("");
   </script>
 </body>
 </html>

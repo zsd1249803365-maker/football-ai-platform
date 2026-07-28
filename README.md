@@ -1,84 +1,66 @@
-# ⚽ Football AI Platform v4.0
+# ⚽ Football AI Platform v4.1
 
-竞彩智能分析系统 —— 多维数据驱动的足球比赛评分与推荐。
+竞彩智能分析系统 —— 支持实时赛程/赔率 + 多维评分 + 联赛筛选。
 
 **在线预览**：https://football-ai-platform-one.vercel.app
 
 ---
 
-## 功能
+## 新功能 (v4.1)
 
-- 首页数据概览 + AI 精选
-- 比赛列表
-- AI 评分排行榜（带概率条）
-- 稳健 / 平衡 / 博冷 方案生成
-- 单场深度分析报告
+- 🔗 **真实数据接入**：通过 Vercel Serverless 代理 API-Football
+- 🎯 **联赛筛选**：英超 / 西甲 / 意甲 / 德甲 / 法甲 / 欧冠
+- 📊 **风险筛选**：低 / 中 / 高
+- 💰 **自动赔率**：拉取书商赔率并参与评分
+- 🟡 **本地回退**：未配置 Key 时自动使用 `matches.json`
 
-## 评分算法 v4.0（统一）
+## 如何接入实时数据（必须）
 
-所有页面共用 `js/score.js` 中的 `analyzeMatch()`：
+### 1. 注册免费 API Key
 
-| 维度 | 权重说明 |
-|------|----------|
-| 球队实力差 | ×0.35 |
-| 近期状态差 | ×0.25 |
-| xG 差 | ×12（攻击威胁强信号） |
+打开 → https://dashboard.api-football.com/register  
+注册后在 Dashboard 复制 **API Key**（免费约 100 次/天）
+
+### 2. 在 Vercel 添加环境变量
+
+1. 打开 https://vercel.com/mini20/football-ai-platform/settings/environment-variables
+2. 新增：
+   - **Key**：`API_FOOTBALL_KEY`
+   - **Value**：你的 API Key
+   - 环境勾选 Production / Preview
+3. 保存后 **Redeploy** 一次（Deployments → 最新 → Redeploy）
+
+### 3. 验证
+
+打开网站首页，应显示 **🟢 实时 API 数据**。  
+比赛列表可按联赛、风险筛选，并显示实时赔率。
+
+---
+
+## 评分算法（统一）
+
+`js/score.js` → `analyzeMatch()`
+
+| 维度 | 权重 |
+|------|------|
+| 实力差 | ×0.35 |
+| 状态差 | ×0.25 |
+| xG 差 | ×12 |
 | 防守差 | ×0.18 |
-| 盘口/市场信号 | odds_change、handicap、heat_risk |
-| 伤停 / 战意 / 疲劳 / 风格 | 直接加减分 |
+| 盘口/热度/伤停等 | 直接加减 |
 
-输出：主客评分、胜平负概率、推荐方向、风险等级、星级、预测比分。
+实时模式下，实力与 xG 由**赔率隐含概率**估算，热度影响风险评级。
 
 ## 项目结构
 
 ```
-├── css/style.css      # 现代深色主题
-├── js/score.js        # 统一评分引擎 + 数据加载
-├── matches.json       # 比赛数据（当前示例）
-├── index.html
-├── matches.html
-├── ai-ranking.html
-├── ai-bet.html
-└── match-detail.html
-```
-
-## 接入实时数据（API-Football）
-
-当前为静态 JSON。要接真实数据：
-
-1. 去 [https://www.api-football.com](https://www.api-football.com) 注册，免费计划约 100 次/天。
-2. 获取 API Key。
-3. 推荐在 Vercel 添加 Serverless Function（避免前端暴露 Key）：
-
-```js
-// api/fixtures.js (Vercel)
-export default async function handler(req, res) {
-  const key = process.env.API_FOOTBALL_KEY;
-  const r = await fetch(
-    "https://v3.football.api-sports.io/fixtures?league=39&season=2025&next=10",
-    { headers: { "x-apisports-key": key } }
-  );
-  const data = await r.json();
-  // 映射成 matches.json 结构后返回
-  res.json(data);
-}
-```
-
-4. 在 `js/score.js` 的 `loadMatches()` 中改为请求 `/api/fixtures`。
-
-其他可选免费/便宜源：
-- football-data.org（需注册）
-- TheSportsDB
-- API-Sports 全家桶
-
-## 本地预览
-
-直接打开 HTML 或使用任意静态服务器：
-
-```bash
-npx serve .
+api/fixtures.js   # Vercel Serverless：赛程+赔率
+css/style.css
+js/score.js       # 评分 + 数据加载（API优先）
+matches.json      # 本地示例回退
+*.html
 ```
 
 ## 免责声明
 
-本项目仅供学习与研究，数据与推荐不构成投注建议。请理性购彩，量力而行。
+仅供学习研究，不构成投注建议。请理性购彩。
