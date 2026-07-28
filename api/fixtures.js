@@ -1,7 +1,18 @@
 /**
- * 精简请求 + 多数据源尝试
- * 免费计划限流严，尽量 1~2 次请求
+ * 适配 API-Football 免费计划限制：
+ * - 无 next 参数权限
+ * - 赛季仅 2022~2024
+ * - from/to 需配合 league
+ * 策略：拉各大联赛 2024 赛季最近场次（真实队名+结构），并尽量补赔率
  */
+
+const LEAGUES = [
+  { id: 39, name: "英超" },
+  { id: 140, name: "西甲" },
+  { id: 135, name: "意甲" },
+  { id: 78, name: "德甲" },
+  { id: 61, name: "法甲" },
+];
 
 async function apiGet(path, key) {
   const res = await fetch(`https://v3.football.api-sports.io${path}`, {
@@ -32,19 +43,23 @@ function mapFixture(f, odds) {
   const strengthAway = Math.round(70 + pA * 30);
   const heat = od.home < 1.55 ? "高" : od.home < 2.15 ? "中" : "低";
   const heatRisk = heat === "高" ? -2 : heat === "中" ? -1 : 0;
+  const status = f.fixture?.status?.short || "NS";
 
   return {
     id: fid,
-    league: f.league?.name || "国际赛事",
+    league: f.league?.name || "联赛",
     home,
     away,
     kickoff: f.fixture?.date || "",
-    status: f.fixture?.status?.short || "NS",
+    status,
+    score: f.goals
+      ? `${f.goals.home ?? "-"}-${f.goals.away ?? "-"}`
+      : null,
     strength: { home: strengthHome, away: strengthAway },
     form: {
       home: strengthHome - 5,
       away: strengthAway - 5,
-      detail: { home: "实时估算", away: "实时估算" },
+      detail: { home: "历史数据", away: "历史数据" },
     },
     xg: {
       home: +(1.1 + pH * 1.2).toFixed(2),
@@ -57,7 +72,7 @@ function mapFixture(f, odds) {
       goal: { line: "2.5", over: "大", under: "小" },
     },
     market_analysis: {
-      trend: "实时数据",
+      trend: status === "FT" ? "已完赛（演示数据）" : "实时/历史赔率",
       heat,
       risk_note: heat === "高" ? "热门过热" : "热度正常",
     },
@@ -65,19 +80,19 @@ function mapFixture(f, odds) {
       odds_change: 0,
       heat_risk: heatRisk,
       handicap_support: pH > 0.45 ? 1 : pA > 0.4 ? -1 : 0,
-      analysis: `${home} vs ${away} · 主${od.home} 平${od.draw} 客${od.away}`,
+      analysis: `${home} vs ${away} · 主${od.home} 平${od.draw} 客${od.away}${status === "FT" ? "（已完赛）" : ""}`,
     },
     injury: {
       home: { players: [], totalImpact: 0 },
       away: { players: [], totalImpact: 0 },
     },
-    motivation: { level: "赛事", impact: 3 },
+    motivation: { level: "联赛", impact: 2 },
     schedule: { recent_match: "-", fatigue: 0 },
     rotation: { risk: "未知", impact: 0 },
     style_match: {
       home_style: "-",
       away_style: "-",
-      matchup: "基于赔率/赛程估算",
+      matchup: "基于赔率估算",
       impact: 0,
     },
     market_logic: {
@@ -99,7 +114,7 @@ function mapFixture(f, odds) {
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
+  res.setHeader("Cache-Control", "s-maxage=600, stale-while-revalidate=1200");
   if (req.method === "OPTIONS") return res.status(200).end();
 
   const key = process.env.API_FOOTBALL_KEY;
@@ -113,75 +128,50 @@ export default async function handler(req, res) {
 
   const debug = [];
   try {
-    let raw = [];
-
-    // 1) 全球 next
-    try {
-      const d = await apiGet(`/fixtures?next=50`, key);
-      raw = d?.response || [];
-      debug.push({ step: "next50", n: raw.length, errors: d?.errors || null });
-    } catch (e) {
-      debug.push({ step: "next50", err: String(e.message) });
+    const leagueParam = req.query?.league;
+    let targets = LEAGUES;
+    if (leagueParam) {
+      targets = LEAGUES.filter(
+        (l) => l.name === leagueParam || String(l.id) === leagueParam
+      );
+      if (!targets.length) targets = LEAGUES.slice(0, 1);
     }
 
-    // 2) 若空：今天起 30 天（不限联赛）
-    if (!raw.length) {
+    // 免费计划：每分钟约 10 次，只拉 2 个联赛 × last=8
+    const pick = targets.slice(0, 2);
+    const raw = [];
+
+    for (const lg of pick) {
       try {
-        const from = new Date().toISOString().slice(0, 10);
-        const to = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
-        const d = await apiGet(`/fixtures?from=${from}&to=${to}`, key);
-        raw = d?.response || [];
-        debug.push({ step: "from-to", n: raw.length, errors: d?.errors || null });
+        // season=2024 是免费计划允许的最近赛季
+        const d = await apiGet(
+          `/fixtures?league=${lg.id}&season=2024&last=8`,
+          key
+        );
+        const list = d?.response || [];
+        debug.push({ league: lg.name, n: list.length, errors: d?.errors || null });
+        raw.push(...list);
       } catch (e) {
-        debug.push({ step: "from-to", err: String(e.message) });
+        debug.push({ league: lg.name, err: String(e.message) });
       }
     }
 
-    // 3) 若仍空：世界杯 2026 (league=1)
-    if (!raw.length) {
-      try {
-        const d = await apiGet(`/fixtures?league=1&season=2026&next=30`, key);
-        raw = d?.response || [];
-        debug.push({ step: "wc2026", n: raw.length, errors: d?.errors || null });
-      } catch (e) {
-        debug.push({ step: "wc2026", err: String(e.message) });
-      }
+    // 去重
+    const seen = new Set();
+    const unique = [];
+    for (const f of raw) {
+      const id = String(f.fixture?.id || "");
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      unique.push(f);
     }
 
-    // 4) 英超最近一轮（可能含已完赛，用于验证 Key 有数据）
-    if (!raw.length) {
-      try {
-        const d = await apiGet(`/fixtures?league=39&season=2025&last=10`, key);
-        raw = d?.response || [];
-        debug.push({ step: "epl-last", n: raw.length, errors: d?.errors || null });
-      } catch (e) {
-        debug.push({ step: "epl-last", err: String(e.message) });
-      }
-    }
-
-    // 不过滤状态：休赛期可能只有少数 NS；也展示近期完赛作演示
-    const statusOk = new Set(["NS", "TBD", "PST", "SUSP", "1H", "HT", "2H", "ET", "P", "LIVE"]);
-    let list = raw.filter((f) => {
-      const s = f.fixture?.status?.short;
-      return !s || statusOk.has(s) || s === "FT" || s === "AET" || s === "PEN";
-    });
-
-    // 优先未开赛
-    list.sort((a, b) => {
-      const au = statusOk.has(a.fixture?.status?.short) && a.fixture?.status?.short !== "FT" ? 0 : 1;
-      const bu = statusOk.has(b.fixture?.status?.short) && b.fixture?.status?.short !== "FT" ? 0 : 1;
-      if (au !== bu) return au - bu;
-      return String(a.fixture?.date).localeCompare(String(b.fixture?.date));
-    });
-
-    list = list.slice(0, 25);
-
-    // 尝试 1 场赔率（省额度）
+    // 补 1 场赔率
     let sampleOdds = null;
-    const firstId = list[0]?.fixture?.id;
-    if (firstId) {
+    const fid = unique[0]?.fixture?.id;
+    if (fid) {
       try {
-        const d = await apiGet(`/odds?fixture=${firstId}`, key);
+        const d = await apiGet(`/odds?fixture=${fid}`, key);
         const bet = d?.response?.[0]?.bookmakers?.[0]?.bets?.find(
           (b) => b.name === "Match Winner" || b.id === 1
         );
@@ -194,25 +184,24 @@ export default async function handler(req, res) {
             draw: parseFloat(dr?.odd) || 3.3,
             away: parseFloat(a?.odd) || 3.4,
           };
-          debug.push({ step: "odds", ok: true });
+          debug.push({ odds: "ok" });
         }
       } catch (e) {
-        debug.push({ step: "odds", err: String(e.message) });
+        debug.push({ odds: String(e.message) });
       }
     }
 
-    let matches = list.map((f, i) => mapFixture(f, i === 0 ? sampleOdds : null));
+    const matches = unique.map((f, i) =>
+      mapFixture(f, i === 0 ? sampleOdds : null)
+    );
 
-    const leagueFilter = req.query?.league;
-    if (leagueFilter) {
-      matches = matches.filter(
-        (m) => m.league === leagueFilter || String(m.league).includes(leagueFilter)
-      );
-    }
+    // 按时间倒序（最近的在前）
+    matches.sort((a, b) => String(b.kickoff).localeCompare(String(a.kickoff)));
 
     return res.status(200).json({
       ok: true,
       count: matches.length,
+      note: "免费计划仅支持 2022-2024 赛季历史数据，无法拉取未来赛程。升级付费计划可获得 next/实时赔率。",
       updatedAt: new Date().toISOString(),
       debug,
       matches,
