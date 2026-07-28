@@ -1,643 +1,187 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="zh-CN">
 <head>
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Football AI 单场分析 v3.8.1</title>
-
-
-<style>
-
-body{
-
-margin:0;
-padding:20px;
-font-family:Arial,sans-serif;
-background:#f3f4f6;
-
-}
-
-
-.header{
-
-background:#111827;
-color:white;
-padding:25px;
-border-radius:18px;
-text-align:center;
-
-}
-
-
-.nav{
-
-text-align:center;
-margin-top:15px;
-
-}
-
-
-.nav a{
-
-display:inline-block;
-padding:8px 12px;
-margin:4px;
-background:#2563eb;
-color:white;
-border-radius:10px;
-text-decoration:none;
-
-}
-
-
-
-.card{
-
-background:white;
-padding:20px;
-margin-top:20px;
-border-radius:18px;
-box-shadow:0 3px 10px #ddd;
-
-}
-
-
-
-.title{
-
-font-size:20px;
-font-weight:bold;
-margin-bottom:15px;
-
-}
-
-
-
-.info{
-
-font-size:16px;
-line-height:32px;
-
-}
-
-
-
-.report{
-
-background:#fff7ed;
-border-left:5px solid #f97316;
-padding:18px;
-font-size:16px;
-line-height:30px;
-
-}
-
-
-
-.score{
-
-font-size:24px;
-font-weight:bold;
-color:#dc2626;
-
-}
-
-.back{
-
-display:block;
-margin-top:25px;
-padding:15px;
-background:#111827;
-color:white;
-text-align:center;
-border-radius:12px;
-text-decoration:none;
-
-}
-
-</style>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>单场分析 - Football AI</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
-
-
 <body>
-
-
-<div class="header">
-
-<h1>⚽ Football AI</h1>
-
-<p>竞彩智能分析系统 v3.8.1</p>
-
-</div>
-
-
-
-<div class="nav">
-
-
-<a href="index.html">
-🏠首页
-</a>
-
-
-<a href="matches.html">
-⚽比赛列表
-</a>
-
-
-<a href="ai-ranking.html">
-📊排行榜
-</a>
-
-
-<a href="ai-bet.html">
-🎫方案
-</a>
-
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-比赛信息
-</div>
-
-
-<h2 id="matchName">
-加载中...
-</h2>
-
-
-<div id="league" class="info">
-
-</div>
-
-
-</div><div class="card">
-
-<div class="title">
-🤖 AI赛前报告
-</div>
-
-<div id="aiReport" class="report">
-正在生成分析...
-</div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-🎯 AI最终建议
-</div>
-
-<div id="aiAdvice" class="report">
-正在生成建议...
-</div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-🎫 AI竞彩策略
-</div>
-
-<div id="betAdvice" class="report">
-正在生成方案...
-</div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-🔥 球队实力
-</div>
-
-<div id="strength" class="info"></div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-📊 近期状态
-</div>
-
-<div id="form" class="info"></div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-📈 xG数据
-</div>
-
-<div id="xg" class="info"></div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-🛡 防守能力
-</div>
-
-<div id="defense" class="info"></div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-💰 欧赔
-</div>
-
-<div id="odds" class="info"></div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-⚽ 竞彩盘口
-</div>
-
-<div id="market" class="info"></div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-📉 盘口走势
-</div>
-
-<div id="marketAnalysis" class="info"></div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-🤖 AI盘口修正
-</div>
-
-<div id="aiMarket" class="info"></div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-🚑 伤停影响
-</div>
-
-<div id="injury" class="info"></div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-🔥 战意分析
-</div>
-
-<div id="motivation" class="info"></div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-⏱ 赛程消耗
-</div>
-
-<div id="schedule" class="info"></div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-🔄 轮换风险
-</div>
-
-<div id="rotation" class="info"></div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-🎯 风格对抗
-</div>
-
-<div id="styleMatch" class="info"></div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-💰 市场逻辑
-</div>
-
-<div id="marketLogic" class="info"></div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-🤖 AI综合评分
-</div>
-
-<div id="aiScore" class="score"></div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-📊 胜平负概率
-</div>
-
-<div id="probability" class="info"></div>
-
-</div>
-
-
-
-<div class="card">
-
-<div class="title">
-⚠️ 风险等级
-</div>
-
-<div id="risk" class="score"></div>
-
-</div>
-
-
-
-<a href="matches.html" class="back">
-
-返回比赛列表
-
-</a><script>
-
-let params = new URLSearchParams(window.location.search);
-
-let game = params.get("game");
-
-
-fetch("matches.json")
-
-
-.then(res=>res.json())
-
-
-.then(data=>{
-
-
-let match = data.find(item=>item.id == game);
-
-
-
-if(!match){
-
-document.getElementById("matchName").innerHTML="未找到比赛";
-
-return;
-
-}
-
-
-
-document.getElementById("matchName").innerHTML =
-match.home+" VS "+match.away;
-
-
-
-document.getElementById("league").innerHTML =
-"联赛："+match.league;
-
-
-
-document.getElementById("strength").innerHTML =
-match.home+"："+match.strength.home+
-"<br>"+
-match.away+"："+match.strength.away;
-
-
-
-document.getElementById("form").innerHTML =
-match.home+"："+match.form.detail.home+
-"<br>"+
-match.away+"："+match.form.detail.away;
-
-
-
-document.getElementById("xg").innerHTML =
-match.home+"："+match.xg.home+
-"<br>"+
-match.away+"："+match.xg.away;
-
-
-
-document.getElementById("defense").innerHTML =
-match.home+"："+match.defense.home+
-"<br>"+
-match.away+"："+match.defense.away;
-
-
-
-document.getElementById("odds").innerHTML =
-"主胜："+match.odds.home+
-"<br>平："+match.odds.draw+
-"<br>客胜："+match.odds.away;
-
-
-
-document.getElementById("market").innerHTML =
-"让球："+match.market.asian_handicap.line+
-"<br>"+
-match.market.asian_handicap.home+
-"<br>"+
-match.market.asian_handicap.away;
-
-
-
-document.getElementById("marketAnalysis").innerHTML =
-match.market_analysis.trend+
-"<br>"+
-match.market_analysis.risk_note;
-
-
-
-document.getElementById("aiMarket").innerHTML =
-match.ai_market.analysis;
-
-
-
-document.getElementById("motivation").innerHTML =
-match.motivation.level+
-"（影响："+match.motivation.impact+"）";
-
-
-
-document.getElementById("schedule").innerHTML =
-match.schedule.recent_match+
-"<br>疲劳："+match.schedule.fatigue;
-
-
-
-document.getElementById("rotation").innerHTML =
-match.rotation.risk;
-
-
-
-document.getElementById("styleMatch").innerHTML =
-match.style_match.matchup;
-
-
-
-document.getElementById("marketLogic").innerHTML =
-match.market_logic.bookmaker_signal;
-
-
-
-let score =
-
-80+
-
-(match.strength.home-match.strength.away)*0.3+
-
-(match.xg.home-match.xg.away)*10+
-
-(match.form.home-match.form.away)*0.2;
-
-
-
-let awayScore = 160-score;
-
-
-
-document.getElementById("aiScore").innerHTML =
-
-match.home+"："+score.toFixed(1)
-+
-"<br>"+
-match.away+"："+awayScore.toFixed(1);
-
-
-
-document.getElementById("probability").innerHTML =
-
-"主胜："+match.prediction.home_win+
-"<br>"+
-"平："+match.prediction.draw+
-"<br>"+
-"客胜："+match.prediction.away_win;
-
-
-
-document.getElementById("risk").innerHTML =
-match.risk;
-
-
-
-document.getElementById("aiReport").innerHTML =
-
-"本场比赛："+match.home+
-" VS "+
-match.away+
-"<br><br>"+
-"AI分析："+match.ai_market.analysis+
-"<br><br>"+
-"预测比分："+match.prediction.score;
-
-
-
-document.getElementById("aiAdvice").innerHTML =
-
-"推荐方向："+
-match.prediction.home_win+
-"<br>"+
-"风险等级："+match.risk;
-
-
-
-document.getElementById("betAdvice").innerHTML =
-
-"竞彩参考：胜平负结合赔率与盘口分析"+
-"<br><br>"+
-"预测比分："+match.prediction.score;
-
-
-
-})
-
-
-.catch(error=>{
-
-
-document.body.innerHTML +=
-
-"<p>数据读取失败："+error+"</p>";
-
-
-});
-
-
-</script>
-
-
+  <div class="header">
+    <h1>⚽ Football AI <span class="version">v4.0</span></h1>
+    <p>单场深度分析</p>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html">🏠 首页</a>
+    <a href="matches.html">⚽ 比赛</a>
+    <a href="ai-ranking.html">📊 排行榜</a>
+    <a href="ai-bet.html">🎫 方案</a>
+  </nav>
+
+  <div class="container" id="content">
+    <div class="loading">正在生成分析报告...</div>
+  </div>
+
+  <div class="footer">Football AI Platform · 数据仅供参考</div>
+
+  <script src="js/score.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const gameId = params.get("game");
+
+    loadMatches()
+      .then(data => {
+        const match = data.find(m => m.id === gameId);
+        if (!match) {
+          document.getElementById("content").innerHTML = `<div class="card"><div class="report danger">未找到比赛 ID: ${gameId}</div></div>`;
+          return;
+        }
+
+        const a = analyzeMatch(match);
+        const m = match;
+
+        const injuryHomeText = (m.injury?.home?.players || []).map(p => `${p.name}(${p.position})`).join(", ") || "无明显伤停";
+        const injuryAwayText = (m.injury?.away?.players || []).map(p => `${p.name}(${p.position})`).join(", ") || "无明显伤停";
+
+        document.getElementById("content").innerHTML = `
+          <div class="card">
+            <div class="match-name">${a.home} vs ${a.away}</div>
+            <div class="match-league">${a.league}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+              <span class="badge ${pickBadgeClass(a.pickSide)}">${a.pick}</span>
+              <span class="badge ${riskBadgeClass(a.riskLevel)}">风险${a.risk}</span>
+              <span class="stars">${a.starStr}</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🤖 AI 赛前报告</div>
+            <div class="report">
+              ${m.ai_market?.analysis || "暂无分析"}<br><br>
+              预测比分：<strong>${a.predScore}</strong><br>
+              推荐方向：<strong>${a.pick}</strong>（主 ${a.homeProb}% / 平 ${a.drawProb}% / 客 ${a.awayProb}%）
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🎯 AI 最终建议</div>
+            <div class="report ${a.riskLevel === "low" ? "success" : a.riskLevel === "high" ? "danger" : ""}">
+              推荐：${a.pick}<br>
+              风险等级：${a.risk}<br>
+              AI 综合评分：主队 ${a.homeScore} / 客队 ${a.awayScore}
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">📊 胜平负概率</div>
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="label">主胜</div>
+                <div class="value">${a.homeProb}%</div>
+                <div class="prob-bar"><div class="prob-bar-fill prob-home" style="width:${a.homeProb}%"></div></div>
+              </div>
+              <div class="info-item">
+                <div class="label">平局</div>
+                <div class="value">${a.drawProb}%</div>
+                <div class="prob-bar"><div class="prob-bar-fill prob-draw" style="width:${a.drawProb}%"></div></div>
+              </div>
+              <div class="info-item">
+                <div class="label">客胜</div>
+                <div class="value">${a.awayProb}%</div>
+                <div class="prob-bar"><div class="prob-bar-fill prob-away" style="width:${a.awayProb}%"></div></div>
+              </div>
+              <div class="info-item">
+                <div class="label">预测比分</div>
+                <div class="value">${a.predScore}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🔥 球队实力</div>
+            <div class="info-grid">
+              <div class="info-item"><div class="label">${a.home}</div><div class="value">${m.strength?.home ?? "-"}</div></div>
+              <div class="info-item"><div class="label">${a.away}</div><div class="value">${m.defense?.away ?? "-"}</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">📈 近期状态</div>
+            <div class="info-grid">
+              <div class="info-item"><div class="label">${a.home}</div><div class="value">${m.form?.detail?.home ?? "-"}</div></div>
+              <div class="info-item"><div class="label">${a.away}</div><div class="value">${m.form?.detail?.away ?? "-"}</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">⚡ xG 数据</div>
+            <div class="info-grid">
+              <div class="info-item"><div class="label">${a.home}</div><div class="value">${m.xg?.home ?? "-"}</div></div>
+              <div class="info-item"><div class="label">${a.away}</div><div class="value">${m.xg?.away ?? "-"}</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🛡 防守能力</div>
+            <div class="info-grid">
+              <div class="info-item"><div class="label">${a.home}</div><div class="value">${m.defense?.home ?? "-"}</div></div>
+              <div class="info-item"><div class="label">${a.away}</div><div class="value">${m.defense?.away ?? "-"}</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">💰 欧赔</div>
+            <div class="info-grid">
+              <div class="info-item"><div class="label">主胜</div><div class="value">${m.odds?.home ?? "-"}</div></div>
+              <div class="info-item"><div class="label">平局</div><div class="value">${m.odds?.draw ?? "-"}</div></div>
+              <div class="info-item"><div class="label">客胜</div><div class="value">${m.odds?.away ?? "-"}</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">⚽ 竞彩盘口</div>
+            <div class="info">
+              让球：${m.market?.asian_handicap?.line ?? "-"}<br>
+              ${m.market?.asian_handicap?.home ?? ""} / ${m.market?.asian_handicap?.away ?? ""}<br>
+              大小球：${m.market?.goal?.line ?? "-"}
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">📉 盘口走势</div>
+            <div class="info">${m.market_analysis?.trend ?? "-"}<br>${m.market_analysis?.risk_note ?? ""}</div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🚑 伤停影响</div>
+            <div class="info">
+              ${a.home}：${injuryHomeText}（影响 ${m.injury?.home?.totalImpact ?? 0}）<br>
+              ${a.away}：${injuryAwayText}（影响 ${m.injury?.away?.totalImpact ?? 0}）
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🔥 战意 / 赛程 / 风格</div>
+            <div class="info">
+              战意：${m.motivation?.level ?? "-"}（影响 ${m.motivation?.impact ?? 0}）<br>
+              赛程：${m.schedule?.recent_match ?? "-"}（疲劳 ${m.schedule?.fatigue ?? 0}）<br>
+              轮换：${m.rotation?.risk ?? "-"}<br>
+              风格：${m.style_match?.matchup ?? "-"}
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">💰 市场逻辑</div>
+            <div class="info">${m.market_logic?.bookmaker_signal ?? "-"}</div>
+          </div>
+
+          <a class="btn btn-dark" href="matches.html">← 返回比赛列表</a>
+        `;
+      })
+      .catch(err => {
+        document.getElementById("content").innerHTML = `<div class="card"><div class="report danger">${err.message}</div></div>`;
+      });
+  </script>
 </body>
-
 </html>

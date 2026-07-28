@@ -1,268 +1,67 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="zh-CN">
 <head>
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Football AI 比赛列表</title>
-
-
-<style>
-
-body{
-
-margin:0;
-padding:20px;
-font-family:Arial,sans-serif;
-background:#f3f4f6;
-
-}
-
-
-.header{
-
-background:#111827;
-color:white;
-padding:25px;
-border-radius:18px;
-text-align:center;
-
-}
-
-
-
-.nav{
-
-text-align:center;
-margin-top:20px;
-
-}
-
-
-
-.nav a{
-
-display:inline-block;
-padding:12px 18px;
-margin:5px;
-border-radius:12px;
-background:#2563eb;
-color:white;
-text-decoration:none;
-
-}
-
-
-.nav .green{
-
-background:#16a34a;
-
-}
-
-
-
-.card{
-
-background:white;
-padding:20px;
-margin-top:20px;
-border-radius:18px;
-box-shadow:0 3px 10px #ddd;
-
-}
-
-
-
-.match{
-
-font-size:20px;
-font-weight:bold;
-
-}
-
-
-
-.info{
-
-font-size:16px;
-line-height:30px;
-
-}
-
-
-
-.button{
-
-display:block;
-margin-top:15px;
-padding:12px;
-background:#111827;
-color:white;
-text-align:center;
-border-radius:10px;
-text-decoration:none;
-
-}
-
-
-</style>
-
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>比赛列表 - Football AI</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
-
-
 <body>
-
-
-<div class="header">
-
-<h1>⚽ Football AI</h1>
-
-<p>竞彩智能分析系统</p>
-
-</div>
-
-
-
-<div class="nav">
-
-
-<a href="index.html">
-
-🏠 首页
-
-</a>
-
-
-<a href="matches.html">
-
-⚽ 比赛列表
-
-</a>
-
-
-<a href="ai-ranking.html">
-
-📊 AI排行榜
-
-</a>
-
-
-<a class="green" href="ai-bet.html">
-
-🎫 竞彩方案
-
-</a>
-
-
-</div>
-
-
-
-<div id="list"></div><script>
-
-
-fetch("matches.json")
-
-
-.then(res=>res.json())
-
-
-.then(data=>{
-
-
-let html="";
-
-
-
-data.forEach(function(match){
-
-
-
-html+=`
-
-<div class="card">
-
-
-<div class="match">
-
-${match.home || "主队"} VS ${match.away || "客队"}
-
-</div>
-
-
-
-<div class="info">
-
-联赛：
-
-${match.league || "未知"}
-
-<br>
-
-比赛编号：
-
-${match.id || ""}
-
-
-</div>
-
-
-
-<a class="button" href="match-detail.html?game=${match.id}">
-
-查看AI详细分析
-
-</a>
-
-
-</div>
-
-`;
-
-
-
-});
-
-
-
-
-document.getElementById("list").innerHTML=html;
-
-
-
-})
-
-
-.catch(function(error){
-
-
-
-document.getElementById("list").innerHTML=
-
-`
-
-<div class="card">
-
-读取比赛数据失败：
-
-${error}
-
-</div>
-
-`;
-
-
-
-});
-
-
-
-</script>
-
-
+  <div class="header">
+    <h1>⚽ Football AI <span class="version">v4.0</span></h1>
+    <p>比赛列表</p>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html">🏠 首页</a>
+    <a href="matches.html" class="active">⚽ 比赛</a>
+    <a href="ai-ranking.html">📊 排行榜</a>
+    <a href="ai-bet.html">🎫 方案</a>
+  </nav>
+
+  <div class="container">
+    <div id="list" class="loading">正在加载比赛...</div>
+  </div>
+
+  <div class="footer">Football AI Platform · 数据仅供参考</div>
+
+  <script src="js/score.js"></script>
+  <script>
+    loadMatches()
+      .then(data => {
+        const results = analyzeAll(data);
+        let html = "";
+
+        results.forEach(g => {
+          html += `
+            <div class="card">
+              <div class="match-name">${g.home} vs ${g.away}</div>
+              <div class="match-league">${g.league} · ID: ${g.id}</div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0">
+                <span class="badge ${pickBadgeClass(g.pickSide)}">${g.pick}</span>
+                <span class="badge ${riskBadgeClass(g.riskLevel)}">风险${g.risk}</span>
+                <span class="stars">${g.starStr}</span>
+              </div>
+              <div class="info-grid">
+                <div class="info-item">
+                  <div class="label">AI 评分</div>
+                  <div class="value">${g.homeScore}</div>
+                </div>
+                <div class="info-item">
+                  <div class="label">主胜概率</div>
+                  <div class="value">${g.homeProb}%</div>
+                </div>
+              </div>
+              <a class="btn btn-dark" href="match-detail.html?game=${g.id}">查看 AI 详细分析</a>
+            </div>
+          `;
+        });
+
+        document.getElementById("list").innerHTML = html || "<div class=\"card\">暂无比赛数据</div>";
+      })
+      .catch(err => {
+        document.getElementById("list").innerHTML = `<div class="card"><div class="report danger">读取失败：${err.message}</div></div>`;
+      });
+  </script>
 </body>
-
-
 </html>

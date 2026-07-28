@@ -1,458 +1,79 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="zh-CN">
 <head>
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Football AI 排行榜 v3.3</title>
-
-
-<style>
-
-body{
-
-margin:0;
-padding:20px;
-font-family:Arial,sans-serif;
-background:#f3f4f6;
-
-}
-
-
-.header{
-
-background:#111827;
-color:white;
-padding:25px;
-border-radius:18px;
-text-align:center;
-
-}
-
-
-
-.card{
-
-background:white;
-padding:20px;
-margin-top:20px;
-border-radius:18px;
-box-shadow:0 3px 10px #ddd;
-
-}
-
-
-
-.match{
-
-font-size:20px;
-font-weight:bold;
-
-}
-
-
-
-.score{
-
-font-size:28px;
-font-weight:bold;
-color:#dc2626;
-
-}
-
-
-
-.info{
-
-font-size:17px;
-line-height:30px;
-
-}
-
-
-
-.star{
-
-font-size:22px;
-
-}
-
-
-
-.button{
-
-display:block;
-margin-top:15px;
-padding:12px;
-background:#111827;
-color:white;
-text-align:center;
-border-radius:10px;
-text-decoration:none;
-
-}
-
-
-</style>
-
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 排行榜 - Football AI</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
-
-
-
 <body>
-
-
-
-<div class="header">
-
-<h1>⚽ Football AI</h1>
-
-<p>竞彩智能筛选系统 v3.3</p>
-
-</div>
-
-
-
-<div id="list"></div><script>
-
-
-function num(v){
-
-return Number(v)||0;
-
-}
-
-
-
-function safe(obj,path,def){
-
-try{
-
-let value=path.split(".").reduce((o,k)=>o[k],obj);
-
-return value??def;
-
-}
-catch(e){
-
-return def;
-
-}
-
-}
-
-
-
-
-
-fetch("matches.json")
-
-.then(res=>res.json())
-
-.then(data=>{
-
-
-let result=[];
-
-
-
-data.forEach(match=>{
-
-
-
-let strengthHome=num(safe(match,"strength.home",0));
-
-let strengthAway=num(safe(match,"strength.away",0));
-
-
-
-let formHome=num(safe(match,"form.home",0));
-
-let formAway=num(safe(match,"form.away",0));
-
-
-
-let xgHome=num(safe(match,"xg.home",0));
-
-let xgAway=num(safe(match,"xg.away",0));
-
-
-
-let defenseHome=num(safe(match,"defense.home",0));
-
-let defenseAway=num(safe(match,"defense.away",0));
-
-
-
-let score=
-
-80+
-
-(strengthHome-strengthAway)*0.3+
-
-(formHome-formAway)*0.2+
-
-(xgHome-xgAway)*10+
-
-(defenseHome-defenseAway)*0.15+
-
-num(safe(match,"ai_market.odds_change",0))+
-
-num(safe(match,"ai_market.handicap_support",0))+
-
-num(safe(match,"ai_market.heat_risk",0))+
-
-num(safe(match,"injury.home.totalImpact",0))+
-
-num(safe(match,"motivation.impact",0))+
-
-num(safe(match,"schedule.fatigue",0))+
-
-num(safe(match,"rotation.impact",0))+
-
-num(safe(match,"style_match.impact",0))+
-
-num(safe(match,"market_logic.impact",0));
-
-
-
-
-
-let awayScore=
-
-160-score+
-
-num(safe(match,"injury.away.totalImpact",0));
-
-
-
-
-
-let diff=score-awayScore;
-
-
-
-let homeProb=
-
-Math.max(5,33+diff*1.5);
-
-
-
-let awayProb=
-
-Math.max(5,33-diff*1.2);
-
-
-
-let drawProb=
-
-Math.max(5,100-homeProb-awayProb);
-
-
-
-
-
-let pick="防平";
-
-
-
-if(homeProb>awayProb&&homeProb>drawProb){
-
-pick="主胜";
-
-}
-
-else if(awayProb>homeProb&&awayProb>drawProb){
-
-pick="客胜";
-
-}
-
-
-
-
-
-
-
-let risk="中";
-
-
-
-let gap=Math.abs(homeProb-awayProb);
-
-
-
-if(gap>=20){
-
-risk="低";
-
-}
-
-else if(gap<10){
-
-risk="高";
-
-}
-
-
-
-
-
-let star="⭐⭐⭐";
-
-
-
-if(score-awayScore>20){
-
-star="⭐⭐⭐⭐⭐";
-
-}
-
-else if(score-awayScore>10){
-
-star="⭐⭐⭐⭐";
-
-}
-
-
-
-
-
-
-result.push({
-
-id:match.id||"",
-
-home:match.home||"未知",
-
-away:match.away||"未知",
-
-score:score,
-
-pick:pick,
-
-risk:risk,
-
-star:star
-
-});
-
-
-
-});
-
-
-
-
-
-result.sort(function(a,b){
-
-return b.score-a.score;
-
-});
-
-
-
-
-
-let html="";
-
-
-
-
-
-result.forEach(function(item,index){
-
-
-
-html+=`
-
-<div class="card">
-
-
-<div class="match">
-
-${index+1}. ${item.home} VS ${item.away}
-
-</div>
-
-
-
-<div class="info">
-
-AI评分：
-
-</div>
-
-
-<div class="score">
-
-${item.score.toFixed(1)}
-
-</div>
-
-
-
-<div class="info">
-
-推荐：${item.pick}
-
-<br>
-
-风险：${item.risk}
-
-<br>
-
-推荐等级：
-
-<span class="star">
-
-${item.star}
-
-</span>
-
-
-</div>
-
-
-
-<a class="button" href="match-detail.html?game=${item.id}">
-
-查看详细分析
-
-</a>
-
-
-
-</div>
-
-`;
-
-
-
-});
-
-
-
-
-document.getElementById("list").innerHTML=html;
-
-
-
-})
-
-.catch(function(error){
-
-
-document.getElementById("list").innerHTML=
-
-"<div class='card'>读取比赛数据失败："+error+"</div>";
-
-
-});</script>
-
+  <div class="header">
+    <h1>⚽ Football AI <span class="version">v4.0</span></h1>
+    <p>AI 智能筛选排行榜</p>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html">🏠 首页</a>
+    <a href="matches.html">⚽ 比赛</a>
+    <a href="ai-ranking.html" class="active">📊 排行榜</a>
+    <a href="ai-bet.html">🎫 方案</a>
+  </nav>
+
+  <div class="container">
+    <div id="list" class="loading">正在计算排名...</div>
+  </div>
+
+  <div class="footer">Football AI Platform · 评分越高越推荐</div>
+
+  <script src="js/score.js"></script>
+  <script>
+    loadMatches()
+      .then(data => {
+        const results = analyzeAll(data);
+        let html = "";
+
+        results.forEach((item, index) => {
+          html += `
+            <div class="card">
+              <div class="match-name">${index + 1}. ${item.home} vs ${item.away}</div>
+              <div class="match-league">${item.league}</div>
+              <div class="score-big">${item.homeScore}</div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0">
+                <span class="badge ${pickBadgeClass(item.pickSide)}">推荐：${item.pick}</span>
+                <span class="badge ${riskBadgeClass(item.riskLevel)}">风险：${item.risk}</span>
+                <span class="stars">${item.starStr}</span>
+              </div>
+              <div class="info-grid" style="margin-bottom:12px">
+                <div class="info-item">
+                  <div class="label">主胜</div>
+                  <div class="value">${item.homeProb}%</div>
+                  <div class="prob-bar"><div class="prob-bar-fill prob-home" style="width:${item.homeProb}%"></div></div>
+                </div>
+                <div class="info-item">
+                  <div class="label">平局</div>
+                  <div class="value">${item.drawProb}%</div>
+                  <div class="prob-bar"><div class="prob-bar-fill prob-draw" style="width:${item.drawProb}%"></div></div>
+                </div>
+                <div class="info-item">
+                  <div class="label">客胜</div>
+                  <div class="value">${item.awayProb}%</div>
+                  <div class="prob-bar"><div class="prob-bar-fill prob-away" style="width:${item.awayProb}%"></div></div>
+                </div>
+                <div class="info-item">
+                  <div class="label">预测比分</div>
+                  <div class="value">${item.predScore}</div>
+                </div>
+              </div>
+              <a class="btn btn-dark" href="match-detail.html?game=${item.id}">查看详细分析</a>
+            </div>
+          `;
+        });
+
+        document.getElementById("list").innerHTML = html || "<div class=\"card\">暂无数据</div>";
+      })
+      .catch(err => {
+        document.getElementById("list").innerHTML = `<div class="card"><div class="report danger">读取失败：${err.message}</div></div>`;
+      });
+  </script>
 </body>
-
 </html>

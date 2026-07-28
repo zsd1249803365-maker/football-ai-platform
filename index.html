@@ -1,466 +1,98 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="zh-CN">
 <head>
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>测试123</title>
-
-
-<style>
-
-body{
-
-margin:0;
-padding:20px;
-font-family:Arial,sans-serif;
-background:#f3f4f6;
-
-}
-
-
-.header{
-
-background:#111827;
-color:white;
-padding:30px;
-border-radius:20px;
-text-align:center;
-
-}
-
-
-
-.card{
-
-background:white;
-margin-top:20px;
-padding:22px;
-border-radius:18px;
-box-shadow:0 4px 12px #ddd;
-
-}
-
-
-
-.title{
-
-font-size:22px;
-font-weight:bold;
-margin-bottom:15px;
-
-}
-
-
-
-.btn{
-
-display:block;
-padding:15px;
-margin-top:12px;
-border-radius:12px;
-text-align:center;
-color:white;
-text-decoration:none;
-font-size:18px;
-
-}
-
-
-
-.blue{
-
-background:#2563eb;
-
-}
-
-
-
-.green{
-
-background:#16a34a;
-
-}
-
-
-
-.orange{
-
-background:#ea580c;
-
-}
-
-
-
-.info{
-
-font-size:17px;
-line-height:32px;
-
-}
-
-
-
-.match{
-
-font-size:19px;
-font-weight:bold;
-
-}
-
-
-
-.score{
-
-font-size:24px;
-font-weight:bold;
-color:#dc2626;
-
-}
-
-
-
-.tag{
-
-display:inline-block;
-background:#eee;
-padding:8px 12px;
-border-radius:20px;
-margin:5px;
-
-}
-
-
-
-</style>
-
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Football AI - 竞彩智能分析系统</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
-
-
 <body>
-
-
-
-<div class="header">
-
-<h1>⚽ Football AI</h1>
-
-<p>竞彩智能分析系统 v3.7</p>
-
-</div>
-
-
-
-
-
-<div class="card">
-
-
-<div class="title">
-
-🚀 系统入口
-
-</div>
-
-
-
-<a class="btn blue" href="matches.html">
-
-⚽ 比赛列表
-
-</a>
-
-
-
-<a class="btn green" href="ai-ranking.html">
-
-📊 AI排行榜
-
-</a>
-
-
-
-<a class="btn orange" href="ai-bet.html">
-
-🎫 竞彩方案
-
-</a>
-
-
-</div>
-
-
-
-
-
-
-<div class="card">
-
-
-<div class="title">
-
-📈 今日数据
-
-</div>
-
-
-<div id="statistics" class="info">
-
-正在读取数据...
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-<div class="card">
-
-
-<div class="title">
-
-🔥 AI精选比赛
-
-</div>
-
-
-<div id="topGames" class="info">
-
-正在分析...
-
-</div>
-
-
-</div><script>
-
-
-fetch("matches.json")
-
-
-.then(res=>res.json())
-
-
-.then(data=>{
-
-
-
-let total=data.length;
-
-
-
-let homeCount=0;
-
-let drawCount=0;
-
-let awayCount=0;
-
-
-
-let games=[];
-
-
-
-data.forEach(function(match){
-
-
-
-let score=0;
-
-
-
-if(match.strength){
-
-score += match.strength.home*0.3;
-
-score -= match.strength.away*0.2;
-
-}
-
-
-
-if(match.xg){
-
-score += (match.xg.home-match.xg.away)*10;
-
-}
-
-
-
-if(match.form){
-
-score += (match.form.home-match.form.away)*0.5;
-
-}
-
-
-
-
-
-let pick="";
-
-
-
-if(score>10){
-
-pick="主队优势";
-
-homeCount++;
-
-}
-
-else if(score<-10){
-
-pick="客队优势";
-
-awayCount++;
-
-}
-
-else{
-
-pick="平局倾向";
-
-drawCount++;
-
-}
-
-
-
-
-games.push({
-
-home:match.home,
-
-away:match.away,
-
-score:score,
-
-pick:pick
-
-});
-
-
-
-});
-
-
-
-
-
-
-games.sort(function(a,b){
-
-return b.score-a.score;
-
-});
-
-
-
-
-
-
-document.getElementById("statistics").innerHTML=
-
-
-"今日比赛："+total+"场"
-
-+"<br><br>"+
-
-"AI倾向统计："
-
-+"<br>"+
-
-"主队优势："+homeCount+"场"
-
-+"<br>"+
-
-"平局倾向："+drawCount+"场"
-
-+"<br>"+
-
-"客队优势："+awayCount+"场";
-
-
-
-
-
-
-
-let html="";
-
-
-
-games.slice(0,3).forEach(function(g,index){
-
-
-
-html+=
-
-
-(index+1)+". "
-
-+g.home+
-
-" VS "
-
-+g.away+
-
-"<br>"+
-
-"AI评分："+
-
-g.score.toFixed(1)
-
-+
-
-"<br>"+
-
-"方向："+
-
-g.pick
-
-+
-
-"<br><br>";
-
-
-
-});
-
-
-
-
-
-document.getElementById("topGames").innerHTML=html;
-
-
-
-})
-
-
-.catch(function(error){
-
-
-document.getElementById("statistics").innerHTML=
-
-"数据读取失败："+error;
-
-
-});
-
-
-
-</script>
-
-
-
+  <div class="header">
+    <h1>⚽ Football AI <span class="version">v4.0</span></h1>
+    <p>竞彩智能分析系统 · 多维数据驱动</p>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html" class="active">🏠 首页</a>
+    <a href="matches.html">⚽ 比赛</a>
+    <a href="ai-ranking.html">📊 排行榜</a>
+    <a href="ai-bet.html">🎫 方案</a>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-title">🚀 系统入口</div>
+      <a class="btn btn-primary" href="matches.html">⚽ 比赛列表</a>
+      <a class="btn btn-success" href="ai-ranking.html">📊 AI 排行榜</a>
+      <a class="btn btn-warning" href="ai-bet.html">🎫 竞彩方案</a>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📈 今日数据概览</div>
+      <div id="statistics" class="loading">正在读取数据...</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔥 AI 精选比赛</div>
+      <div id="topGames" class="loading">正在分析...</div>
+    </div>
+  </div>
+
+  <div class="footer">Football AI Platform · 数据仅供参考，理性购彩</div>
+
+  <script src="js/score.js"></script>
+  <script>
+    loadMatches()
+      .then(data => {
+        const results = analyzeAll(data);
+
+        const homeCount = results.filter(r => r.pickSide === "home").length;
+        const drawCount = results.filter(r => r.pickSide === "draw").length;
+        const awayCount = results.filter(r => r.pickSide === "away").length;
+
+        document.getElementById("statistics").innerHTML = `
+          <div class="stats-row">
+            <div class="stat-box">
+              <div class="num">${results.length}</div>
+              <div class="label">今日比赛</div>
+            </div>
+            <div class="stat-box">
+              <div class="num" style="color:var(--success)">${homeCount}</div>
+              <div class="label">主队优势</div>
+            </div>
+            <div class="stat-box">
+              <div class="num" style="color:var(--warning)">${drawCount}</div>
+              <div class="label">平局倾向</div>
+            </div>
+            <div class="stat-box">
+              <div class="num" style="color:var(--danger)">${awayCount}</div>
+              <div class="label">客队优势</div>
+            </div>
+          </div>
+        `;
+
+        let html = "";
+        results.slice(0, 3).forEach((g, i) => {
+          html += `
+            <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+              <div class="match-name">${i + 1}. ${g.home} vs ${g.away}</div>
+              <div class="match-league">${g.league}</div>
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px">
+                <span class="score-big" style="font-size:1.4rem">${g.homeScore}</span>
+                <span class="badge ${pickBadgeClass(g.pickSide)}">${g.pick}</span>
+                <span class="badge ${riskBadgeClass(g.riskLevel)}">风险${g.risk}</span>
+                <span class="stars">${g.starStr}</span>
+              </div>
+              <a class="btn btn-dark" href="match-detail.html?game=${g.id}" style="margin-top:12px;padding:10px">查看详细分析 →</a>
+            </div>
+          `;
+        });
+        document.getElementById("topGames").innerHTML = html || "暂无数据";
+      })
+      .catch(err => {
+        document.getElementById("statistics").innerHTML = `<div class="report danger">数据读取失败：${err.message}</div>`;
+        document.getElementById("topGames").innerHTML = "";
+      });
+  </script>
 </body>
-
-
 </html>

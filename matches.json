@@ -4,518 +4,179 @@
     "league": "英超",
     "home": "曼城",
     "away": "利物浦",
-
-    "strength": {
-      "home": 92,
-      "away": 88
-    },
-
+    "kickoff": "2026-07-28 03:00",
+    "strength": { "home": 92, "away": 88 },
     "form": {
       "home": 85,
       "away": 82,
-      "detail": {
-        "home": "4胜1平",
-        "away": "3胜1平1负"
-      }
+      "detail": { "home": "4胜1平", "away": "3胜1平1负" }
     },
-
-    "xg": {
-      "home": 2.15,
-      "away": 1.72
-    },
-
-    "defense": {
-      "home": 86,
-      "away": 83
-    },
-
-
-    "odds": {
-      "home": 1.85,
-      "draw": 3.60,
-      "away": 3.90
-    },
-
-
+    "xg": { "home": 2.15, "away": 1.72 },
+    "defense": { "home": 86, "away": 83 },
+    "odds": { "home": 1.85, "draw": 3.60, "away": 3.90 },
     "market": {
-
-      "asian_handicap": {
-        "line": "-1",
-        "home": "让胜",
-        "away": "让负"
-      },
-
-      "goal": {
-        "line": "2.5",
-        "over": "大",
-        "under": "小"
-      }
-
+      "asian_handicap": { "line": "-1", "home": "让胜", "away": "让负" },
+      "goal": { "line": "2.5", "over": "大", "under": "小" }
     },
-
-
     "market_analysis": {
-
       "trend": "主胜赔率下降",
       "heat": "高",
       "risk_note": "市场集中主胜，需要防范冷门"
-
     },
-
-
     "ai_market": {
-
       "odds_change": 2,
       "heat_risk": -1,
       "handicap_support": 2,
-
-      "analysis":
-      "盘口支持主队，但热门过热"
-
+      "analysis": "盘口支持主队，但热门过热，平局风险上升"
     },
-
-
     "injury": {
-
       "home": {
-
-        "players": [
-          {
-            "name": "主力中场",
-            "position": "MF",
-            "impact": -2
-          }
-        ],
-
+        "players": [{ "name": "主力中场", "position": "MF", "impact": -2 }],
         "totalImpact": -2
-
       },
-
-
-      "away": {
-
-        "players": [],
-
-        "totalImpact": 0
-
-      }
-
+      "away": { "players": [], "totalImpact": 0 }
     },
-
-
-    "motivation": {
-
-      "level": "争冠",
-      "impact": 5
-
-    },
-
-
-    "schedule": {
-
-      "recent_match": "欧冠4天前",
-      "fatigue": -2
-
-    },
-
-
-    "rotation": {
-
-      "risk": "低",
-      "impact": 0
-
-    },
-
-
+    "motivation": { "level": "争冠", "impact": 5 },
+    "schedule": { "recent_match": "欧冠4天前", "fatigue": -2 },
+    "rotation": { "risk": "低", "impact": 0 },
     "style_match": {
-
       "home_style": "控球高压",
-
       "away_style": "快速反击",
-
-      "matchup":
-      "利物浦速度可能冲击曼城高位防线",
-
+      "matchup": "利物浦速度可能冲击曼城高位防线",
       "impact": -2
-
     },
-
-
     "market_logic": {
-
       "popular_side": "主胜",
-
       "cold_side": "平局",
-
-      "bookmaker_signal":
-      "主胜投注集中，庄家防范平局",
-
+      "bookmaker_signal": "主胜投注集中，庄家防范平局",
       "impact": -2
-
     },
-
-
     "prediction": {
-
       "home_win": "39%",
       "draw": "32%",
       "away_win": "29%",
       "score": "1-1"
-
     },
-
-
     "risk": "中等"
-
+  },
+  {
+    "id": "real",
+    "league": "西甲",
+    "home": "皇家马德里",
+    "away": "巴塞罗那",
+    "kickoff": "2026-07-28 03:00",
+    "strength": { "home": 90, "away": 87 },
+    "form": {
+      "home": 86,
+      "away": 84,
+      "detail": { "home": "3胜2平", "away": "4胜1负" }
+    },
+    "xg": { "home": 1.95, "away": 1.68 },
+    "defense": { "home": 89, "away": 85 },
+    "odds": { "home": 2.10, "draw": 3.50, "away": 3.20 },
+    "market": {
+      "asian_handicap": { "line": "-0.5", "home": "让胜", "away": "让负" },
+      "goal": { "line": "2.5", "over": "大", "under": "小" }
+    },
+    "market_analysis": {
+      "trend": "皇马赔率下降",
+      "heat": "高",
+      "risk_note": "皇马热门集中，存在赔付压力"
+    },
+    "ai_market": {
+      "odds_change": 1,
+      "heat_risk": -2,
+      "handicap_support": 1,
+      "analysis": "主队优势明显，但市场热度偏高"
+    },
+    "injury": {
+      "home": {
+        "players": [{ "name": "后防主力", "position": "DF", "impact": -2 }],
+        "totalImpact": -2
+      },
+      "away": { "players": [], "totalImpact": 0 }
+    },
+    "motivation": { "level": "争冠", "impact": 5 },
+    "schedule": { "recent_match": "联赛正常", "fatigue": 0 },
+    "rotation": { "risk": "低", "impact": 0 },
+    "style_match": {
+      "home_style": "快速推进",
+      "away_style": "控球传导",
+      "matchup": "皇马速度冲击巴萨防线",
+      "impact": 1
+    },
+    "market_logic": {
+      "popular_side": "皇马胜",
+      "cold_side": "平局",
+      "bookmaker_signal": "强队热门升温，防止平局结果",
+      "impact": -2
+    },
+    "prediction": {
+      "home_win": "43%",
+      "draw": "30%",
+      "away_win": "27%",
+      "score": "2-1"
+    },
+    "risk": "较高"
+  },
+  {
+    "id": "inter",
+    "league": "意甲",
+    "home": "国际米兰",
+    "away": "AC米兰",
+    "kickoff": "2026-07-28 02:45",
+    "strength": { "home": 86, "away": 82 },
+    "form": {
+      "home": 84,
+      "away": 80,
+      "detail": { "home": "4胜1负", "away": "3胜1平1负" }
+    },
+    "xg": { "home": 1.80, "away": 1.20 },
+    "defense": { "home": 91, "away": 84 },
+    "odds": { "home": 2.00, "draw": 3.30, "away": 3.60 },
+    "market": {
+      "asian_handicap": { "line": "-0.5", "home": "让胜", "away": "让负" },
+      "goal": { "line": "2.5", "over": "大", "under": "小" }
+    },
+    "market_analysis": {
+      "trend": "主胜稳定",
+      "heat": "中",
+      "risk_note": "盘口变化有限"
+    },
+    "ai_market": {
+      "odds_change": 1,
+      "heat_risk": 0,
+      "handicap_support": 2,
+      "analysis": "市场方向与基本面一致，国米防守优势明显"
+    },
+    "injury": {
+      "home": { "players": [], "totalImpact": 0 },
+      "away": {
+        "players": [{ "name": "主力后卫", "position": "DF", "impact": -3 }],
+        "totalImpact": -3
+      }
+    },
+    "motivation": { "level": "欧战资格", "impact": 3 },
+    "schedule": { "recent_match": "联赛正常", "fatigue": 0 },
+    "rotation": { "risk": "低", "impact": 0 },
+    "style_match": {
+      "home_style": "防守反击+边路推进",
+      "away_style": "高位压迫",
+      "matchup": "国米防线更适合限制米兰压迫",
+      "impact": 2
+    },
+    "market_logic": {
+      "popular_side": "国米胜",
+      "cold_side": "客胜",
+      "bookmaker_signal": "主胜热度增加，关注平局风险",
+      "impact": -1
+    },
+    "prediction": {
+      "home_win": "39%",
+      "draw": "31%",
+      "away_win": "30%",
+      "score": "1-0"
+    },
+    "risk": "低"
   }
-,
-
-{
-  "id": "real",
-  "league": "西甲",
-  "home": "皇家马德里",
-  "away": "巴塞罗那",
-
-  "strength": {
-    "home": 90,
-    "away": 87
-  },
-
-
-  "form": {
-    "home": 86,
-    "away": 84,
-    "detail": {
-      "home": "3胜2平",
-      "away": "4胜1负"
-    }
-  },
-
-
-  "xg": {
-    "home": 1.95,
-    "away": 1.68
-  },
-
-
-  "defense": {
-    "home": 89,
-    "away": 85
-  },
-
-
-  "odds": {
-    "home": 2.10,
-    "draw": 3.50,
-    "away": 3.20
-  },
-
-
-  "market": {
-
-    "asian_handicap": {
-      "line": "-0.5",
-      "home": "让胜",
-      "away": "让负"
-    },
-
-    "goal": {
-      "line": "2.5",
-      "over": "大",
-      "under": "小"
-    }
-
-  },
-
-
-  "market_analysis": {
-
-    "trend": "皇马赔率下降",
-    "heat": "高",
-    "risk_note": "皇马热门集中，存在赔付压力"
-
-  },
-
-
-  "ai_market": {
-
-    "odds_change": 1,
-    "heat_risk": -2,
-    "handicap_support": 1,
-
-    "analysis":
-    "主队优势明显，但市场热度偏高"
-
-  },
-
-
-  "injury": {
-
-    "home": {
-
-      "players": [
-        {
-          "name": "后防主力",
-          "position": "DF",
-          "impact": -2
-        }
-      ],
-
-      "totalImpact": -2
-
-    },
-
-
-    "away": {
-
-      "players": [],
-
-      "totalImpact": 0
-
-    }
-
-  },
-
-
-  "motivation": {
-
-    "level": "争冠",
-    "impact": 5
-
-  },
-
-
-  "schedule": {
-
-    "recent_match": "联赛正常",
-    "fatigue": 0
-
-  },
-
-
-  "rotation": {
-
-    "risk": "低",
-    "impact": 0
-
-  },
-
-
-  "style_match": {
-
-    "home_style": "快速推进",
-
-    "away_style": "控球传导",
-
-    "matchup":
-    "皇马速度冲击巴萨防线",
-
-    "impact": 1
-
-  },
-
-
-  "market_logic": {
-
-    "popular_side": "皇马胜",
-
-    "cold_side": "平局",
-
-    "bookmaker_signal":
-    "强队热门升温，防止平局结果",
-
-    "impact": -2
-
-  },
-
-
-  "prediction": {
-
-    "home_win": "43%",
-    "draw": "30%",
-    "away_win": "27%",
-    "score": "2-1"
-
-  },
-
-
-  "risk": "较高"
-
-},
-
-
-{
-  "id": "inter",
-  "league": "意甲",
-  "home": "国际米兰",
-  "away": "AC米兰",
-
-
-  "strength": {
-    "home": 86,
-    "away": 82
-  },
-
-
-  "form": {
-    "home": 84,
-    "away": 80,
-    "detail": {
-      "home": "4胜1负",
-      "away": "3胜1平1负"
-    }
-  },
-
-
-  "xg": {
-    "home": 1.80,
-    "away": 1.20
-  },
-
-
-  "defense": {
-    "home": 91,
-    "away": 84
-  },
-
-
-  "odds": {
-    "home": 2.00,
-    "draw": 3.30,
-    "away": 3.60
-  },
-
-
-  "market": {
-
-    "asian_handicap": {
-      "line": "-0.5",
-      "home": "让胜",
-      "away": "让负"
-    },
-
-    "goal": {
-      "line": "2.5",
-      "over": "大",
-      "under": "小"
-    }
-
-  },
-
-
-  "market_analysis": {
-
-    "trend": "主胜稳定",
-    "heat": "中",
-    "risk_note": "盘口变化有限"
-
-  },
-
-
-  "ai_market": {
-
-    "odds_change": 1,
-    "heat_risk": 0,
-    "handicap_support": 2,
-
-    "analysis":
-    "市场方向与基本面一致"
-
-  },
-
-
-  "injury": {
-
-    "home": {
-
-      "players": [],
-
-      "totalImpact": 0
-
-    },
-
-
-    "away": {
-
-      "players": [
-        {
-          "name": "主力后卫",
-          "position": "DF",
-          "impact": -3
-        }
-      ],
-
-      "totalImpact": -3
-
-    }
-
-  },
-
-
-  "motivation": {
-
-    "level": "欧战资格",
-    "impact": 3
-
-  },
-
-
-  "schedule": {
-
-    "recent_match": "联赛正常",
-    "fatigue": 0
-
-  },
-
-
-  "rotation": {
-
-    "risk": "低",
-    "impact": 0
-
-  },
-
-
-  "style_match": {
-
-    "home_style": "防守反击+边路推进",
-
-    "away_style": "高位压迫",
-
-    "matchup":
-    "国米防线更适合限制米兰压迫",
-
-    "impact": 2
-
-  },
-
-
-  "market_logic": {
-
-    "popular_side": "国米胜",
-
-    "cold_side": "客胜",
-
-    "bookmaker_signal":
-    "主胜热度增加，关注平局风险",
-
-    "impact": -1
-
-  },
-
-
-  "prediction": {
-
-    "home_win": "39%",
-    "draw": "31%",
-    "away_win": "30%",
-    "score": "1-0"
-
-  },
-
-
-  "risk": "低"
-
-}
-
 ]
