@@ -1,6 +1,6 @@
 /**
- * Football AI Scoring Engine v4.1
- * 支持真实 API 数据 + 本地回退 + 筛选
+ * Football AI Scoring Engine v4.2
+ * 综合赛程 + 本地回退
  */
 
 function num(v) {
@@ -148,17 +148,16 @@ function analyzeAll(matches) {
   return matches.map(analyzeMatch).sort((a, b) => b.homeScore - a.homeScore);
 }
 
-/** 优先 API，失败回退 matches.json */
 async function loadMatches(leagueFilter) {
-  // 1. 尝试真实 API
   try {
     const q = leagueFilter ? `?league=${encodeURIComponent(leagueFilter)}` : "";
-    const res = await fetch(`/api/fixtures${q}&t=` + Date.now());
+    const res = await fetch(`/api/fixtures${q}${q ? "&" : "?"}t=` + Date.now());
     if (res.ok) {
       const data = await res.json();
       if (data.ok && Array.isArray(data.matches) && data.matches.length > 0) {
-        window.__DATA_SOURCE__ = "api";
+        window.__DATA_SOURCE__ = data.source || "api";
         window.__DATA_UPDATED__ = data.updatedAt;
+        window.__DATA_NOTE__ = data.note || "";
         return data.matches;
       }
     }
@@ -166,7 +165,6 @@ async function loadMatches(leagueFilter) {
     console.warn("API 不可用，使用本地数据", e);
   }
 
-  // 2. 本地回退
   const res = await fetch("matches.json?t=" + Date.now());
   if (!res.ok) throw new Error("HTTP " + res.status);
   const data = await res.json();
@@ -194,6 +192,7 @@ function formatKickoff(iso) {
   if (!iso) return "";
   try {
     const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
     return d.toLocaleString("zh-CN", {
       month: "numeric",
       day: "numeric",
