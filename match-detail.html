@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>单场分析 - Football AI</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=5.1">
   <style>
-    .report-block { white-space: pre-wrap; line-height: 1.7; font-size: 0.95rem; }
+    .report-block { white-space: pre-wrap; line-height: 1.75; font-size: 0.95rem; }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v4.4</span></h1>
-    <p>单场深度分析</p>
+    <h1>⚽ Football AI <span class="version">v5.1</span></h1>
+    <p>单场深度分析 · 泊松比分 · 盘口解读</p>
   </div>
 
   <nav class="nav">
@@ -26,9 +27,9 @@
     <div class="loading">正在生成分析报告...</div>
   </div>
 
-  <div class="footer">Football AI v4.4 · 仅供参考</div>
+  <div class="footer">Football AI v5.1 · 仅供参考</div>
 
-  <script src="js/score.js"></script>
+  <script src="js/score.js?v=5.1"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const gameId = params.get("game");
@@ -36,11 +37,12 @@
     function render(match) {
       const a = analyzeMatch(match);
       const m = match;
+      const srcLabel = a.source === "odds-api" ? "🟢 联网真实赔率" : "🟡 估算/赛程";
 
       document.getElementById("content").innerHTML = `
         <div class="card">
           <div class="match-name">${a.home} vs ${a.away}</div>
-          <div class="match-league">${a.league}${a.kickoff ? " · " + formatKickoff(a.kickoff) : ""}</div>
+          <div class="match-league">${a.league}${a.kickoff ? " · " + formatKickoff(a.kickoff) : ""} · ${srcLabel}</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
             <span class="badge ${pickBadgeClass(a.pickSide)}">${a.pick}</span>
             <span class="badge ${riskBadgeClass(a.riskLevel)}">风险${a.risk}</span>
@@ -59,7 +61,8 @@
             推荐：<strong>${a.pick}</strong><br>
             风险：${a.risk}<br>
             综合评分：主 ${a.homeScore} / 客 ${a.awayScore}<br>
-            预测比分：${a.predScore}
+            预测比分：<strong>${a.predScore}</strong>${a.predScoreProb ? `（约 ${a.predScoreProb}%）` : ""}<br>
+            ${a.altScores && a.altScores.length ? "备选：" + a.altScores.join("、") : ""}
           </div>
         </div>
 
@@ -89,7 +92,7 @@
         </div>
 
         <div class="card">
-          <div class="card-title">💰 实时赔率</div>
+          <div class="card-title">💰 赔率（联网书商均值）</div>
           <div class="info-grid">
             <div class="info-item"><div class="label">主胜</div><div class="value">${m.odds?.home ?? "-"}</div></div>
             <div class="info-item"><div class="label">平局</div><div class="value">${m.odds?.draw ?? "-"}</div></div>
@@ -115,7 +118,6 @@
       .then(data => {
         let match = findMatch(data, gameId);
         if (!match) {
-          // 再试缓存
           try {
             const cached = JSON.parse(sessionStorage.getItem("fa_matches") || "[]");
             match = findMatch(cached, gameId);
@@ -126,7 +128,7 @@
             <div class="card">
               <div class="report danger">未找到该场比赛</div>
               <p style="color:var(--text-muted);font-size:0.9rem;margin-top:12px">
-                可能是数据已刷新，或链接已过期。请从比赛列表重新进入。
+                可能是数据已刷新。请从比赛列表重新进入。
               </p>
               <a class="btn btn-primary" href="matches.html">返回比赛列表</a>
             </div>`;
