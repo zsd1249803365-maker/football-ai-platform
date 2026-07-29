@@ -1,10 +1,10 @@
 /**
- * Football AI Scoring Engine v4.4
+ * Football AI Scoring Engine v5.0
  * 中文队名 · 深度分析 · 按日期排序 · 详情缓存
+ * 合并产品规格文档分析风格：赔率结构 / 模型偏差 / 风险操作建议
  */
 
 const TEAM_ZH = {
-  // 巴甲
   Internacional: "国际",
   Flamengo: "弗拉门戈",
   Mirassol: "米拉索",
@@ -27,7 +27,6 @@ const TEAM_ZH = {
   Santos: "桑托斯",
   "Bragantino-SP": "布拉加antino",
   Bragantino: "布拉加antino",
-  // 美职联
   "New York City FC": "纽约城",
   "Toronto FC": "多伦多FC",
   "Philadelphia Union": "费城联",
@@ -58,7 +57,6 @@ const TEAM_ZH = {
   "FC Dallas": "达拉斯FC",
   "Portland Timbers": "波特兰伐木者",
   "Seattle Sounders FC": "西雅图海湾人",
-  // 挪超
   "Vålerenga": "瓦勒伦加",
   HamKam: "汉坎",
   "Bodø/Glimt": "博德闪耀",
@@ -75,7 +73,6 @@ const TEAM_ZH = {
   "Sarpsborg FK": "萨尔普斯堡",
   "SK Brann": "布兰",
   Rosenborg: "罗森博格",
-  // 瑞典超
   "BK Hacken": "哈肯",
   "Kalmar FF": "卡尔马",
   "IFK Goteborg": "哥德堡",
@@ -88,7 +85,6 @@ const TEAM_ZH = {
   "Västerås SK": "韦斯特罗斯",
   "Halmstads BK": "哈尔姆斯塔德",
   "IK Sirius": "天狼星",
-  // 欧陆常见
   Arsenal: "阿森纳",
   "Bayern Munich": "拜仁慕尼黑",
   Stuttgart: "斯图加特",
@@ -104,13 +100,12 @@ const TEAM_ZH = {
 function toZh(name) {
   if (!name) return "未知";
   if (TEAM_ZH[name]) return TEAM_ZH[name];
-  // 模糊：去掉 FC / SC / CF 等后缀再试
   const cleaned = String(name).replace(/\s+(FC|SC|CF|FK|BK|IF|SK|United)$/i, "").trim();
   if (TEAM_ZH[cleaned]) return TEAM_ZH[cleaned];
   for (const [en, zh] of Object.entries(TEAM_ZH)) {
     if (en.toLowerCase() === String(name).toLowerCase()) return zh;
   }
-  return name; // 找不到则保留原文
+  return name;
 }
 
 function num(v) {
@@ -127,35 +122,20 @@ function safe(obj, path, def = 0) {
   }
 }
 
-/** 根据赔率与概率生成更有信息量的中文分析 */
+/** 深度中文分析（规格文档风格：多维度解读） */
 function buildAnalysis(ctx) {
   const {
-    home,
-    away,
-    league,
-    homeProb,
-    drawProb,
-    awayProb,
-    pick,
-    risk,
-    riskLevel,
-    predScore,
-    odds,
-    heatRisk,
-    homeScore,
-    awayScore,
-    gap,
+    home, away, league, homeProb, drawProb, awayProb, pick, risk, riskLevel,
+    predScore, odds, heatRisk, homeScore, awayScore, gap,
   } = ctx;
 
   const od = odds || { home: 2.2, draw: 3.3, away: 3.2 };
   const lines = [];
 
-  // 开场定位
   lines.push(
     `【${league}】${home} 对阵 ${away}。市场给出主胜 ${od.home}、平 ${od.draw}、客胜 ${od.away}。`
   );
 
-  // 赔率结构解读
   const invH = 1 / od.home;
   const invD = 1 / od.draw;
   const invA = 1 / od.away;
@@ -182,7 +162,6 @@ function buildAnalysis(ctx) {
     );
   }
 
-  // AI 与市场偏差
   const aiH = homeProb;
   const delta = aiH - mktH;
   if (Math.abs(delta) >= 6) {
@@ -201,7 +180,6 @@ function buildAnalysis(ctx) {
     );
   }
 
-  // 推荐逻辑
   if (pick === "主胜") {
     lines.push(
       `综合评分主 ${homeScore} / 客 ${awayScore}，主胜概率 ${homeProb.toFixed(0)}%，平 ${drawProb.toFixed(0)}%，客 ${awayProb.toFixed(0)}%。倾向主胜，预测比分 ${predScore}。`
@@ -216,7 +194,6 @@ function buildAnalysis(ctx) {
     );
   }
 
-  // 风险与操作建议
   if (riskLevel === "high" || heatRisk <= -2) {
     lines.push(
       `风险偏高：${heatRisk <= -2 ? "热门过热，易生冷门；" : ""}概率差距不够大或盘口偏极端。建议控制仓位，不宜重注单边。`
@@ -388,7 +365,6 @@ function analyzeMatch(match) {
   };
 }
 
-/** 按开赛时间从近到远 */
 function sortByKickoff(list) {
   return [...list].sort((a, b) => {
     const ta = new Date(a.kickoff || 0).getTime() || 0;
@@ -397,12 +373,10 @@ function sortByKickoff(list) {
   });
 }
 
-/** 按 AI 评分从高到低（排行榜用） */
 function analyzeAll(matches) {
   return matches.map(analyzeMatch).sort((a, b) => b.homeScore - a.homeScore);
 }
 
-/** 分析后按日期排序（列表页用） */
 function analyzeAllByDate(matches) {
   return sortByKickoff(matches.map(analyzeMatch));
 }
@@ -417,7 +391,6 @@ async function loadMatches(leagueFilter) {
         window.__DATA_SOURCE__ = data.source || "api";
         window.__DATA_UPDATED__ = data.updatedAt;
         window.__DATA_NOTE__ = data.note || "";
-        // 缓存供详情页使用，避免「未找到比赛」
         try {
           sessionStorage.setItem("fa_matches", JSON.stringify(data.matches));
           sessionStorage.setItem("fa_matches_at", data.updatedAt || "");
@@ -429,7 +402,6 @@ async function loadMatches(leagueFilter) {
     console.warn("API 不可用，使用本地数据", e);
   }
 
-  // 尝试 session 缓存
   try {
     const cached = sessionStorage.getItem("fa_matches");
     if (cached) {
@@ -454,13 +426,11 @@ async function loadMatches(leagueFilter) {
   return list;
 }
 
-/** 详情页：按 id 查找，找不到再用主客队名 */
 function findMatch(list, gameId) {
   if (!gameId) return null;
   const id = decodeURIComponent(String(gameId));
   let m = list.find((x) => String(x.id) === id);
   if (m) return m;
-  // 兼容旧链接或编码差异
   m = list.find((x) => String(x.id) === gameId);
   return m || null;
 }

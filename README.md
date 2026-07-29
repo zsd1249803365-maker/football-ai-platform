@@ -1,43 +1,45 @@
-# ⚽ Football AI Platform v4.1
+# ⚽ Football AI Platform v5.0
 
-竞彩智能分析系统 —— 支持实时赛程/赔率 + 多维评分 + 联赛筛选。
+综合足球赛程 · 真实赔率 · 多维 AI 评分分析
 
 **在线预览**：https://football-ai-platform-one.vercel.app
 
 ---
 
-## 新功能 (v4.1)
+## v5.0 更新（合并产品规格要点）
 
-- 🔗 **真实数据接入**：通过 Vercel Serverless 代理 API-Football
-- 🎯 **联赛筛选**：英超 / 西甲 / 意甲 / 德甲 / 法甲 / 欧冠
+- 🔗 **真实赔率**：The Odds API（多家书商 h2h 平均，EU 区域）
+- 🎯 **联赛筛选**：美职联 / 瑞典超 / 挪超 / 巴甲 / 英超 / 西甲 / 德甲 等
 - 📊 **风险筛选**：低 / 中 / 高
-- 💰 **自动赔率**：拉取书商赔率并参与评分
-- 🟡 **本地回退**：未配置 Key 时自动使用 `matches.json`
+- 💰 **自动赔率参与评分**：隐含概率估算实力与 xG
+- 🟡 **本地回退**：未配置 Key 时使用 `matches.json`
+- 📝 **深度中文分析**：赔率结构 + 模型 vs 市场偏差 + 风险建议
 
-## 如何接入实时数据（必须）
+> 说明：规格文档中的 OpticOdds 为 B2B 企业级接口（需销售开通），当前免费可用方案仍为 **The Odds API**。
 
-### 1. 注册免费 API Key
+## 如何接入真实赔率
 
-打开 → https://dashboard.api-football.com/register  
-注册后在 Dashboard 复制 **API Key**（免费约 100 次/天）
+### 1. 获取 The Odds API Key（免费额度）
+
+打开 → https://the-odds-api.com/  
+注册后复制 API Key。
 
 ### 2. 在 Vercel 添加环境变量
 
-1. 打开 https://vercel.com/mini20/football-ai-platform/settings/environment-variables
+1. 打开项目 Settings → Environment Variables
 2. 新增：
-   - **Key**：`API_FOOTBALL_KEY`
+   - **Key**：`THE_ODDS_API_KEY`
    - **Value**：你的 API Key
    - 环境勾选 Production / Preview
-3. 保存后 **Redeploy** 一次（Deployments → 最新 → Redeploy）
+3. 保存后 **Redeploy**（Deployments → 最新 → ⋯ → Redeploy）
 
 ### 3. 验证
 
-打开网站首页，应显示 **🟢 实时 API 数据**。  
-比赛列表可按联赛、风险筛选，并显示实时赔率。
+打开网站首页，数据状态应显示 **🟢 真实赔率（The Odds API）**。
 
 ---
 
-## 评分算法（统一）
+## 评分算法
 
 `js/score.js` → `analyzeMatch()`
 
@@ -54,9 +56,9 @@
 ## 项目结构
 
 ```
-api/fixtures.js   # Vercel Serverless：赛程+赔率
+api/fixtures.js   # Vercel Serverless：赛程+赔率（The Odds API → TheSportsDB 回退）
 css/style.css
-js/score.js       # 评分 + 数据加载（API优先）
+js/score.js       # 评分 + 数据加载 + 中文分析报告
 matches.json      # 本地示例回退
 *.html
 ```
