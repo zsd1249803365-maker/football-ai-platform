@@ -3,12 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>AI 排行榜 - Football AI</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=5.3">
+  <style>
+    .odds-box {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: rgba(10,15,13,0.55);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+      font-variant-numeric: tabular-nums;
+    }
+    .odds-row { margin-bottom: 2px; }
+    .odds-prob { color: var(--primary); font-weight: 600; margin-top: 4px; }
+    .list-end {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.82rem;
+      padding: 18px 8px 8px;
+    }
+  </style>
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v4.4</span></h1>
+    <h1>⚽ Football AI <span class="version">v5.3</span></h1>
     <p>AI 智能筛选排行榜</p>
   </div>
 
@@ -20,16 +42,22 @@
   </nav>
 
   <div class="container">
-    <div id="list" class="loading">正在计算排名...</div>
+    <div id="list"><div class="loading">正在计算排名...</div></div>
   </div>
 
-  <div class="footer">Football AI v4.4 · 评分越高越推荐</div>
+  <div class="footer">Football AI v5.3 · 评分越高越推荐</div>
 
-  <script src="js/score.js"></script>
+  <script src="js/score.js?v=5.3"></script>
   <script>
     loadMatches()
       .then(data => {
-        const results = analyzeAll(data);
+        const results = analyzeAll(data || []);
+        if (!results.length) {
+          document.getElementById("list").innerHTML =
+            `<div class="card"><div class="report">暂无数据</div></div>
+             <div class="list-end">— 已结束 —</div>`;
+          return;
+        }
         let html = "";
         results.forEach((item, index) => {
           html += `
@@ -42,35 +70,17 @@
                 <span class="badge ${riskBadgeClass(item.riskLevel)}">风险：${item.risk}</span>
                 <span class="stars">${item.starStr}</span>
               </div>
-              <div class="info-grid" style="margin-bottom:12px">
-                <div class="info-item">
-                  <div class="label">主胜</div>
-                  <div class="value">${item.homeProb}%</div>
-                  <div class="prob-bar"><div class="prob-bar-fill prob-home" style="width:${item.homeProb}%"></div></div>
-                </div>
-                <div class="info-item">
-                  <div class="label">平局</div>
-                  <div class="value">${item.drawProb}%</div>
-                  <div class="prob-bar"><div class="prob-bar-fill prob-draw" style="width:${item.drawProb}%"></div></div>
-                </div>
-                <div class="info-item">
-                  <div class="label">客胜</div>
-                  <div class="value">${item.awayProb}%</div>
-                  <div class="prob-bar"><div class="prob-bar-fill prob-away" style="width:${item.awayProb}%"></div></div>
-                </div>
-                <div class="info-item">
-                  <div class="label">预测比分</div>
-                  <div class="value">${item.predScore}</div>
-                </div>
-              </div>
+              ${oddsSnippet(item)}
               <a class="btn btn-dark" href="match-detail.html?game=${encodeURIComponent(item.id)}">查看详细分析</a>
             </div>`;
         });
-        document.getElementById("list").innerHTML = html || "<div class=\"card\">暂无数据</div>";
+        html += `<div class="list-end">— 共 ${results.length} 场，已全部显示 —</div>`;
+        document.getElementById("list").innerHTML = html;
       })
       .catch(err => {
         document.getElementById("list").innerHTML =
-          `<div class="card"><div class="report danger">读取失败：${err.message}</div></div>`;
+          `<div class="card"><div class="report danger">读取失败：${err.message}</div></div>
+           <div class="list-end">— 结束 —</div>`;
       });
   </script>
 </body>

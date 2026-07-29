@@ -1,8 +1,7 @@
 /**
- * Football AI Scoring Engine v5.1
- * - 真实赔率联网（The Odds API）
- * - 比分：基于 xG 的简化泊松，不再千篇一律 2-1
- * - AI 分析：盘口结构 + 价值偏差 + 进球环境 + 操作建议
+ * Football AI Scoring Engine v5.3
+ * 多维分析：盘口/让球/大小/实力/xG/热度/模型偏差
+ * 列表可一眼看到赔率+让球+大小+备选比分
  */
 
 const TEAM_ZH = {
@@ -72,50 +71,9 @@ function fact(n) {
   return r;
 }
 
-/** 泊松 P(k|λ) */
 function poissonP(k, lambda) {
   if (lambda <= 0) return k === 0 ? 1 : 0;
   return (Math.exp(-lambda) * Math.pow(lambda, k)) / fact(k);
-}
-
-/**
- * 用主客期望进球（xG）生成最可能比分 + 备选比分
- * 不再写死 2-1
- */
-function predictScoreFromXG(xgH, xgA, homeProb, awayProb, drawProb) {
-  const lh = Math.max(0.35, Math.min(3.8, xgH));
-  const la = Math.max(0.35, Math.min(3.8, xgA));
-  const scores = [];
-  for (let h = 0; h <= 5; h++) {
-    for (let a = 0; a <= 5; a++) {
-      const p = poissonP(h, lh) * poissonP(a, la);
-      scores.push({ h, a, p, str: h + "-" + a });
-    }
-  }
-  scores.sort((x, y) => y.p - x.p);
-
-  // 按胜平负方向约束：优先取与 pick 一致的最高概率比分
-  let pickSide = "draw";
-  if (homeProb >= awayProb && homeProb >= drawProb) pickSide = "home";
-  else if (awayProb > homeProb && awayProb >= drawProb) pickSide = "away";
-
-  const matchSide = (s) => {
-    if (pickSide === "home") return s.h > s.a;
-    if (pickSide === "away") return s.a > s.h;
-    return s.h === s.a;
-  };
-
-  const primary = scores.find(matchSide) || scores[0];
-  const alts = scores.filter((s) => s.str !== primary.str).slice(0, 2);
-
-  return {
-    predScore: primary.str,
-    predProb: +(primary.p * 100).toFixed(1),
-    altScores: alts.map((s) => s.str + "(" + (s.p * 100).toFixed(0) + "%)"),
-    totalGoalsExp: +(lh + la).toFixed(2),
-    xgHome: +lh.toFixed(2),
-    xgAway: +la.toFixed(2),
-  };
 }
 
 function marketImplied(od) {
@@ -130,99 +88,185 @@ function marketImplied(od) {
   };
 }
 
+function predictScoreFromXG(xgH, xgA, homeProb, awayProb, drawProb) {
+  const lh = Math.max(0.35, Math.min(3.8, xgH));
+  const la = Math.max(0.35, Math.min(3.8, xgA));
+  const scores = [];
+  for (let h = 0; h <= 5; h++) {
+    for (let a = 0; a <= 5; a++) {
+      scores.push({ h, a, p: poissonP(h, lh) * poissonP(a, la), str: h + "-" + a });
+    }
+  }
+  scores.sort((x, y) => y.p - x.p);
+
+  let pickSide = "draw";
+  if (homeProb >= awayProb && homeProb >= drawProb) pickSide = "home";
+  else if (awayProb > homeProb && awayProb >= drawProb) pickSide = "away";
+
+  const matchSide = (s) => {
+    if (pickSide === "home") return s.h > s.a;
+    if (pickSide === "away") return s.a > s.h;
+    return s.h === s.a;
+  };
+
+  const primary = scores.find(matchSide) || scores[0];
+  const alts = scores.filter((s) => s.str !== primary.str).slice(0, 3);
+
+  // 大小球方向粗算
+  let overProb = 0;
+  for (const s of scores) {
+    if (s.h + s.a > 2.5) overProb += s.p;
+  }
+
+  return {
+    predScore: primary.str,
+    predProb: +(primary.p * 100).toFixed(1),
+    altScores: alts.map((s) => ({ str: s.str, prob: +(s.p * 100).toFixed(1) })),
+    altScoresText: alts.map((s) => s.str + "(" + (s.p * 100).toFixed(0) + "%)"),
+    totalGoalsExp: +(lh + la).toFixed(2),
+    xgHome: +lh.toFixed(2),
+    xgAway: +la.toFixed(2),
+    over25Prob: +(overProb * 100).toFixed(1),
+    under25Prob: +((1 - overProb) * 100).toFixed(1),
+  };
+}
+
+function getAsian(match) {
+  const a = safe(match, "market.asian_handicap", null);
+  if (a && typeof a === "object") {
+    return {
+      line: a.line != null ? String(a.line) : "-",
+      home: a.home != null && a.home !== "-" ? a.home : null,
+      away: a.away != null && a.away !== "-" ? a.away : null,
+    };
+  }
+  return { line: "-", home: null, away: null };
+}
+
+function getTotals(match) {
+  const t = safe(match, "market.goal", null);
+  if (t && typeof t === "object") {
+    return {
+      line: t.line != null ? String(t.line) : "2.5",
+      over: t.over != null && t.over !== "-" ? t.over : null,
+      under: t.under != null && t.under !== "-" ? t.under : null,
+    };
+  }
+  return { line: "2.5", over: null, under: null };
+}
+
+/** 多维中文分析：明确写出分析维度与依据 */
 function buildAnalysis(ctx) {
   const {
     home, away, league, homeProb, drawProb, awayProb, pick, risk, riskLevel,
     predScore, odds, heatRisk, homeScore, awayScore, gap, scoreInfo, source,
+    asian, totals, strengthHome, strengthAway, formHome, formAway,
   } = ctx;
 
   const od = odds || { home: 2.2, draw: 3.3, away: 3.2 };
   const { mktH, mktD, mktA } = marketImplied(od);
   const lines = [];
-  const isLiveOdds = source === "odds-api";
+  const isLive = source === "odds-api";
 
   lines.push(
-    `【${league}】${home} vs ${away}。` +
-      (isLiveOdds
-        ? `当前为联网真实赔率：主 ${od.home} / 平 ${od.draw} / 客 ${od.away}（多家书商平均）。`
-        : `当前为估算盘口：主 ${od.home} / 平 ${od.draw} / 客 ${od.away}（未拉到实时赔率时的回退）。`)
+    `【分析范围】本报告综合以下维度：①胜平负盘口结构 ②让球盘方向 ③大小球环境 ④实力/状态评分 ⑤期望进球(xG)泊松比分 ⑥模型概率与市场隐含偏差 ⑦热度与风险。` +
+      (isLive
+        ? `数据来源：The Odds API 多家书商实时均值（联网）。`
+        : `数据来源：赛程回退估算（未拉到实时盘口时）。`)
   );
 
-  // 盘口画像
+  lines.push(
+    `【对阵】${league} · ${home} vs ${away}。` +
+      `胜平负：主 ${od.home} / 平 ${od.draw} / 客 ${od.away}（隐含约 主${mktH.toFixed(0)}% 平${mktD.toFixed(0)}% 客${mktA.toFixed(0)}%）。`
+  );
+
+  // ① 盘口
   if (od.home <= 1.35) {
     lines.push(
-      `主队被开成大热（主胜仅 ${od.home}），隐含主胜约 ${mktH.toFixed(0)}%。盘口一边倒时，真正风险在「平局/客队偷分」——一旦打穿，回报和回撤都不对称。`
+      `【盘口】主队大热（主胜仅 ${od.home}）。此类盘口真正风险在平局/客队偷分，回报不对称，不宜重注单边。`
     );
   } else if (od.home <= 1.75) {
     lines.push(
-      `主队受追捧但不极端（主 ${od.home}），隐含主胜约 ${mktH.toFixed(0)}%、平约 ${mktD.toFixed(0)}%。优势在，却仍要给平局留位置。`
+      `【盘口】主队受追捧但不极端。优势存在，仍需给平局留空间。`
     );
   } else if (od.away <= 1.75) {
     lines.push(
-      `客队被市场看好（客 ${od.away}），隐含客胜约 ${mktA.toFixed(0)}%。客场仍能开出低赔，通常意味着状态或纸面实力差较明显。`
+      `【盘口】客队被市场看好（客 ${od.away}）。客场低赔通常反映状态或纸面实力差较明显。`
     );
   } else if (Math.abs(od.home - od.away) < 0.35) {
-    lines.push(
-      `主客赔率几乎咬死（主 ${od.home} / 客 ${od.away}），属于典型「难分伯仲」盘。方向感弱，更适合看进球数或观望。`
-    );
+    lines.push(`【盘口】主客几乎咬死，方向感弱，更适合看进球数或观望。`);
   } else {
-    lines.push(
-      `三角盘相对均衡：主 ${od.home} / 平 ${od.draw} / 客 ${od.away}，隐含概率主 ${mktH.toFixed(0)}% · 平 ${mktD.toFixed(0)}% · 客 ${mktA.toFixed(0)}%。`
-    );
+    lines.push(`【盘口】三角盘相对均衡，结果弹性较大。`);
   }
 
-  // 模型 vs 市场
-  const delta = homeProb - mktH;
-  if (Math.abs(delta) >= 5) {
-    if (delta > 0) {
-      lines.push(
-        `模型给主队 ${homeProb.toFixed(0)}%，高于市场隐含 ${mktH.toFixed(0)}% 约 ${delta.toFixed(0)} 个点——若你信任模型结构，主胜方向带一点「价值」色彩；否则也可能是模型对客队防守/战意估计不足。`
-      );
-    } else {
-      lines.push(
-        `模型对主队更保守（${homeProb.toFixed(0)}%），低于市场约 ${Math.abs(delta).toFixed(0)} 个点。常见于市场过热：赔率已提前兑现预期，实际出线未必有盘口看起来稳。`
-      );
-    }
-  } else {
+  // ② 让球
+  if (asian && asian.line && asian.line !== "-") {
+    const ah = asian.home != null ? asian.home : "-";
+    const aa = asian.away != null ? asian.away : "-";
     lines.push(
-      `模型与市场分歧不大（主 ${homeProb.toFixed(0)}% vs 市 ${mktH.toFixed(0)}%），说明这盘主要反映共识，而不是明显错定价。`
+      `【让球】盘口 ${asian.line}，主队水位 ${ah} / 客队水位 ${aa}。` +
+        (num(asian.line) < 0
+          ? `主队让球，市场默认主队更强；需看是否让得过深导致不值。`
+          : num(asian.line) > 0
+          ? `主队受让，客队被看得更强或主队战意存疑。`
+          : `平手盘，双方接近。`)
     );
+  } else {
+    lines.push(`【让球】本场暂无可靠让球数据，仅参考胜平负与模型评分。`);
   }
 
-  // 进球环境 + 比分
+  // ③ 大小球
   if (scoreInfo) {
     const tg = scoreInfo.totalGoalsExp;
-    let goalTone = "中等";
-    if (tg >= 3.0) goalTone = "偏大";
-    else if (tg <= 2.1) goalTone = "偏小";
+    const tLine = totals?.line || "2.5";
+    const ov = totals?.over != null ? totals.over : "-";
+    const un = totals?.under != null ? totals.under : "-";
     lines.push(
-      `期望进球环境：主 xG≈${scoreInfo.xgHome}、客 xG≈${scoreInfo.xgAway}，合计约 ${tg}，整体偏${goalTone}。` +
-        `泊松推演最可能比分【${predScore}】（约 ${scoreInfo.predProb}%）；备选 ${scoreInfo.altScores.join("、")}。`
+      `【大小球】书商线 ${tLine}，大球 ${ov} / 小球 ${un}。` +
+        `模型期望总进球约 ${tg}，大2.5概率约 ${scoreInfo.over25Prob}%、小2.5约 ${scoreInfo.under25Prob}%。` +
+        (tg >= 2.8 ? `进球环境偏大。` : tg <= 2.1 ? `进球环境偏小。` : `进球环境中性。`)
     );
   }
 
-  // 推荐与仓位
+  // ④ 实力状态
   lines.push(
-    `综合评分 主 ${homeScore} / 客 ${awayScore}；概率 主 ${homeProb.toFixed(0)}% · 平 ${drawProb.toFixed(0)}% · 客 ${awayProb.toFixed(0)}%。` +
-      `倾向【${pick}】，预测比分 ${predScore}。`
+    `【实力与状态】评分主 ${strengthHome} / 客 ${strengthAway}；状态粗估主 ${formHome} / 客 ${formAway}。` +
+      `综合模型分 主 ${homeScore} / 客 ${awayScore}（含盘口热度、让球支持、伤停占位等加权）。`
   );
 
-  if (riskLevel === "high" || heatRisk <= -2) {
+  // ⑤ 比分
+  if (scoreInfo) {
     lines.push(
-      `风险偏高：${heatRisk <= -2 ? "热门过热，爆冷赔率不对称；" : ""}概率差或盘口结构不支持重注。建议小仓或拆成「方向 + 防冷」组合，不宜一把梭。`
+      `【比分推演】以期望进球主 ${scoreInfo.xgHome} / 客 ${scoreInfo.xgAway} 做泊松分布，` +
+        `最可能比分【${predScore}】约 ${scoreInfo.predProb}%；备选 ${scoreInfo.altScoresText.join("、")}。` +
+        `比分不是拍脑袋，是按进球期望扫全比分矩阵后取与推荐方向一致的最高概率结果。`
     );
-  } else if (riskLevel === "low" && gap >= 18) {
+  }
+
+  // ⑥ 模型 vs 市场
+  const delta = homeProb - mktH;
+  if (Math.abs(delta) >= 5) {
     lines.push(
-      `方向相对清晰（概率差约 ${gap.toFixed(0)} 点），可作稳健参考；仍建议看临场伤停/首发后再定仓位。`
+      delta > 0
+        ? `【模型偏差】模型主胜 ${homeProb.toFixed(0)}% 高于市场隐含 ${mktH.toFixed(0)}% 约 ${delta.toFixed(0)} 点，主胜方向带一定「价值」色彩（也可能是模型低估客队）。`
+        : `【模型偏差】模型对主队更保守（${homeProb.toFixed(0)}%），低于市场约 ${Math.abs(delta).toFixed(0)} 点，需防市场过热。`
     );
   } else {
     lines.push(
-      `中等风险：有倾向但不够「锁死」。可用试探仓验证思路，或等临场信息更全再跟。`
+      `【模型偏差】与市场接近（主 ${homeProb.toFixed(0)}% vs 市 ${mktH.toFixed(0)}%），这盘主要反映共识而非明显错定价。`
     );
   }
 
+  // ⑦ 结论
   lines.push(
-    `数据说明：赔率为联网书商均值；比分由期望进球做泊松推演，不是人工拍脑袋。不含伤停/阵容新闻的实时爬取。仅供研究，请理性决策。`
+    `【结论】概率 主 ${homeProb.toFixed(0)}% · 平 ${drawProb.toFixed(0)}% · 客 ${awayProb.toFixed(0)}%。` +
+      `推荐【${pick}】，预测 ${predScore}，风险【${risk}】。` +
+      (riskLevel === "high" || heatRisk <= -2
+        ? `仓位建议：小注或观望，不宜重注。`
+        : riskLevel === "low" && gap >= 18
+        ? `仓位建议：可作稳健参考，仍建议结合临场首发再定。`
+        : `仓位建议：中等试探，或等临场信息更全再跟。`) +
+      ` 不含实时伤停新闻爬取；仅供研究，请理性决策。`
   );
 
   return lines.join("\n\n");
@@ -240,15 +284,12 @@ function analyzeMatch(match) {
   let xgHome = num(safe(match, "xg.home", 1.3));
   let xgAway = num(safe(match, "xg.away", 1.3));
 
-  // 若有真实赔率，用隐含概率微调 xG，让比分更跟盘
   const od = match.odds || { home: 2.2, draw: 3.3, away: 3.2 };
   const { mktH, mktA, mktD } = marketImplied(od);
   const totalBase = xgHome + xgAway || 2.4;
-  // 市场强队分到更多期望进球
   const shareH = Math.max(0.28, Math.min(0.72, (mktH + mktD * 0.35) / 100));
   xgHome = +(totalBase * shareH).toFixed(2);
   xgAway = +(totalBase * (1 - shareH)).toFixed(2);
-  // 热门再压一点客队进球
   if (od.home <= 1.4) {
     xgHome = Math.min(3.2, xgHome + 0.25);
     xgAway = Math.max(0.4, xgAway - 0.15);
@@ -297,7 +338,6 @@ function analyzeMatch(match) {
 
   const diff = homeScore - awayScore;
 
-  // 概率同时吃一点市场隐含，避免和盘口完全脱节
   let homeProb = 28 + diff * 1.2 + mktH * 0.22;
   let awayProb = 28 - diff * 1.0 + mktA * 0.22;
   let drawProb = 100 - homeProb - awayProb;
@@ -343,6 +383,8 @@ function analyzeMatch(match) {
 
   const scoreInfo = predictScoreFromXG(xgHome, xgAway, homeProb, awayProb, drawProb);
   const predScore = scoreInfo.predScore;
+  const asian = getAsian(match);
+  const totals = getTotals(match);
 
   const homeZh = toZh(match.home);
   const awayZh = toZh(match.away);
@@ -367,6 +409,12 @@ function analyzeMatch(match) {
     gap,
     scoreInfo,
     source,
+    asian,
+    totals,
+    strengthHome,
+    strengthAway,
+    formHome,
+    formAway,
   });
 
   return {
@@ -391,8 +439,13 @@ function analyzeMatch(match) {
     predScore,
     predScoreProb: scoreInfo.predProb,
     altScores: scoreInfo.altScores,
+    altScoresText: scoreInfo.altScoresText,
+    over25Prob: scoreInfo.over25Prob,
+    under25Prob: scoreInfo.under25Prob,
     maxProb: Math.round(maxProb * 10) / 10,
     odds: match.odds || null,
+    asian,
+    totals,
     source,
     report,
     raw: match,
@@ -448,16 +501,20 @@ async function loadMatches(leagueFilter) {
     }
   } catch (_) {}
 
-  const res = await fetch("matches.json?t=" + Date.now());
-  if (!res.ok) throw new Error("HTTP " + res.status);
-  const data = await res.json();
-  let list = Array.isArray(data) ? data : [];
-  if (leagueFilter) list = list.filter((m) => m.league === leagueFilter);
-  window.__DATA_SOURCE__ = "local";
   try {
-    sessionStorage.setItem("fa_matches", JSON.stringify(list));
-  } catch (_) {}
-  return list;
+    const res = await fetch("matches.json?t=" + Date.now());
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    let list = Array.isArray(data) ? data : [];
+    if (leagueFilter) list = list.filter((m) => m.league === leagueFilter);
+    window.__DATA_SOURCE__ = "local";
+    try {
+      sessionStorage.setItem("fa_matches", JSON.stringify(list));
+    } catch (_) {}
+    return list;
+  } catch (e) {
+    return [];
+  }
 }
 
 function findMatch(list, gameId) {
@@ -495,4 +552,32 @@ function formatKickoff(iso) {
   } catch {
     return iso;
   }
+}
+
+/** 列表/方案卡片用的赔率摘要 HTML */
+function oddsSnippet(g) {
+  const od = g.odds || {};
+  const ah = g.asian || {};
+  const tt = g.totals || {};
+  const alts = (g.altScoresText || []).slice(0, 2).join(" · ") || "-";
+  const h2h =
+    od.home != null
+      ? `胜平负 ${od.home} / ${od.draw} / ${od.away}`
+      : "胜平负 -";
+  const asianLine =
+    ah.line && ah.line !== "-"
+      ? `让球 ${ah.line}（主${ah.home ?? "-"}/客${ah.away ?? "-"}）`
+      : "让球 -";
+  const totalLine =
+    tt.over != null || tt.under != null
+      ? `大小 ${tt.line || "2.5"}（大${tt.over ?? "-"}/小${tt.under ?? "-"}）`
+      : `大小 模型大2.5约${g.over25Prob ?? "-"}%`;
+  return `
+    <div class="odds-box">
+      <div class="odds-row">${h2h}</div>
+      <div class="odds-row">${asianLine}</div>
+      <div class="odds-row">${totalLine}</div>
+      <div class="odds-row">预测 <strong>${g.predScore}</strong>（${g.predScoreProb ?? "-"}%） · 备选 ${alts}</div>
+      <div class="odds-row odds-prob">主${g.homeProb}% · 平${g.drawProb}% · 客${g.awayProb}%</div>
+    </div>`;
 }

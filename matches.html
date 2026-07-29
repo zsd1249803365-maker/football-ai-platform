@@ -5,11 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>比赛列表 - Football AI</title>
-  <link rel="stylesheet" href="css/style.css?v=5.2">
+  <link rel="stylesheet" href="css/style.css?v=5.3">
+  <style>
+    .odds-box {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: rgba(10,15,13,0.55);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+      font-variant-numeric: tabular-nums;
+    }
+    .odds-row { margin-bottom: 2px; }
+    .odds-prob { color: var(--primary); font-weight: 600; margin-top: 4px; }
+    .list-end {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.82rem;
+      padding: 18px 8px 8px;
+    }
+  </style>
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v5.2</span></h1>
+    <h1>⚽ Football AI <span class="version">v5.3</span></h1>
     <p>比赛列表 · 按开赛时间 · 真实赔率</p>
   </div>
 
@@ -24,29 +45,29 @@
     <div class="source-tag" id="sourceTag">数据来源加载中...</div>
 
     <div class="filters" id="leagueFilters">
-      <button class="filter-btn active" data-league="">全部</button>
-      <button class="filter-btn" data-league="美职联">美职联</button>
-      <button class="filter-btn" data-league="巴甲">巴甲</button>
-      <button class="filter-btn" data-league="挪超">挪超</button>
-      <button class="filter-btn" data-league="瑞典超">瑞典超</button>
-      <button class="filter-btn" data-league="英超">英超</button>
-      <button class="filter-btn" data-league="西甲">西甲</button>
-      <button class="filter-btn" data-league="德甲">德甲</button>
+      <button type="button" class="filter-btn active" data-league="">全部</button>
+      <button type="button" class="filter-btn" data-league="美职联">美职联</button>
+      <button type="button" class="filter-btn" data-league="巴甲">巴甲</button>
+      <button type="button" class="filter-btn" data-league="挪超">挪超</button>
+      <button type="button" class="filter-btn" data-league="瑞典超">瑞典超</button>
+      <button type="button" class="filter-btn" data-league="英超">英超</button>
+      <button type="button" class="filter-btn" data-league="西甲">西甲</button>
+      <button type="button" class="filter-btn" data-league="德甲">德甲</button>
     </div>
 
     <div class="filters" id="riskFilters">
-      <button class="filter-btn active" data-risk="">全部风险</button>
-      <button class="filter-btn" data-risk="low">低风险</button>
-      <button class="filter-btn" data-risk="mid">中风险</button>
-      <button class="filter-btn" data-risk="high">高风险</button>
+      <button type="button" class="filter-btn active" data-risk="">全部风险</button>
+      <button type="button" class="filter-btn" data-risk="low">低风险</button>
+      <button type="button" class="filter-btn" data-risk="mid">中风险</button>
+      <button type="button" class="filter-btn" data-risk="high">高风险</button>
     </div>
 
-    <div id="list" class="loading">正在加载比赛...</div>
+    <div id="list"><div class="loading">正在加载比赛...</div></div>
   </div>
 
-  <div class="footer">Football AI v5.2 · 仅供参考</div>
+  <div class="footer">Football AI v5.3 · 仅供参考</div>
 
-  <script src="js/score.js?v=5.2"></script>
+  <script src="js/score.js?v=5.3"></script>
   <script>
     let allResults = [];
     let currentLeague = "";
@@ -58,16 +79,16 @@
         list = list.filter(g => g.league === currentLeague || String(g.league).includes(currentLeague));
       }
       if (currentRisk) list = list.filter(g => g.riskLevel === currentRisk);
+
       if (!list.length) {
         document.getElementById("list").innerHTML =
-          `<div class="card"><div class="report">暂无符合条件的比赛</div></div>`;
+          `<div class="card"><div class="report">暂无符合条件的比赛</div></div>
+           <div class="list-end">— 已显示全部 —</div>`;
         return;
       }
+
       let html = "";
       list.forEach(g => {
-        const oddsText = g.odds
-          ? `主 ${g.odds.home} / 平 ${g.odds.draw} / 客 ${g.odds.away}`
-          : "";
         html += `
           <div class="card">
             <div class="match-name">${g.home} vs ${g.away}</div>
@@ -77,14 +98,11 @@
               <span class="badge ${riskBadgeClass(g.riskLevel)}">风险${g.risk}</span>
               <span class="stars">${g.starStr}</span>
             </div>
-            <div class="info-grid">
-              <div class="info-item"><div class="label">AI 评分</div><div class="value">${g.homeScore}</div></div>
-              <div class="info-item"><div class="label">主胜概率</div><div class="value">${g.homeProb}%</div></div>
-            </div>
-            ${oddsText ? `<div style="font-size:0.8rem;color:var(--text-dim);margin-top:10px;font-variant-numeric:tabular-nums">赔率：${oddsText}</div>` : ""}
-            <a class="btn btn-dark" href="match-detail.html?game=${encodeURIComponent(g.id)}">查看 AI 详细分析</a>
+            ${oddsSnippet(g)}
+            <a class="btn btn-dark" href="match-detail.html?game=${encodeURIComponent(g.id)}">查看完整 AI 分析报告</a>
           </div>`;
       });
+      html += `<div class="list-end">— 共 ${list.length} 场，已全部显示 —</div>`;
       document.getElementById("list").innerHTML = html;
     }
 
@@ -93,7 +111,7 @@
         btn.onclick = () => {
           document.querySelectorAll("#leagueFilters .filter-btn").forEach(b => b.classList.remove("active"));
           btn.classList.add("active");
-          currentLeague = btn.dataset.league;
+          currentLeague = btn.dataset.league || "";
           load(currentLeague);
         };
       });
@@ -101,7 +119,7 @@
         btn.onclick = () => {
           document.querySelectorAll("#riskFilters .filter-btn").forEach(b => b.classList.remove("active"));
           btn.classList.add("active");
-          currentRisk = btn.dataset.risk;
+          currentRisk = btn.dataset.risk || "";
           render();
         };
       });
@@ -111,7 +129,7 @@
       document.getElementById("list").innerHTML = `<div class="loading">正在加载...</div>`;
       loadMatches(league || undefined)
         .then(data => {
-          allResults = analyzeAllByDate(data);
+          allResults = analyzeAllByDate(data || []);
           const srcMap = {
             "odds-api": "🟢 真实赔率（The Odds API）",
             thesportsdb: "🟡 综合赛程",
@@ -125,7 +143,8 @@
         })
         .catch(err => {
           document.getElementById("list").innerHTML =
-            `<div class="card"><div class="report danger">读取失败：${err.message}</div></div>`;
+            `<div class="card"><div class="report danger">读取失败：${err.message}</div></div>
+             <div class="list-end">— 加载结束 —</div>`;
         });
     }
 

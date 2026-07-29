@@ -5,15 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>单场分析 - Football AI</title>
-  <link rel="stylesheet" href="css/style.css?v=5.2">
+  <link rel="stylesheet" href="css/style.css?v=5.3">
   <style>
     .report-block { white-space: pre-wrap; line-height: 1.8; font-size: 0.92rem; }
+    .odds-box {
+      margin-top: 4px;
+      padding: 12px 14px;
+      background: rgba(10,15,13,0.55);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      font-variant-numeric: tabular-nums;
+    }
+    .odds-row { margin-bottom: 4px; }
+    .odds-prob { color: var(--primary); font-weight: 600; }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v5.2</span></h1>
-    <p>单场深度分析 · 泊松比分 · 盘口解读</p>
+    <h1>⚽ Football AI <span class="version">v5.3</span></h1>
+    <p>单场多维分析 · 泊松比分 · 盘口解读</p>
   </div>
 
   <nav class="nav">
@@ -27,9 +40,9 @@
     <div class="loading">正在生成分析报告...</div>
   </div>
 
-  <div class="footer">Football AI v5.2 · 仅供参考</div>
+  <div class="footer">Football AI v5.3 · 仅供参考</div>
 
-  <script src="js/score.js?v=5.2"></script>
+  <script src="js/score.js?v=5.3"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const gameId = params.get("game");
@@ -51,7 +64,12 @@
         </div>
 
         <div class="card">
-          <div class="card-title">AI 深度分析</div>
+          <div class="card-title">盘口速览</div>
+          ${oddsSnippet(a)}
+        </div>
+
+        <div class="card">
+          <div class="card-title">AI 多维分析报告</div>
           <div class="report report-block">${a.report}</div>
         </div>
 
@@ -62,7 +80,7 @@
             风险：${a.risk}<br>
             综合评分：主 ${a.homeScore} / 客 ${a.awayScore}<br>
             预测比分：<strong>${a.predScore}</strong>${a.predScoreProb ? `（约 ${a.predScoreProb}%）` : ""}<br>
-            ${a.altScores && a.altScores.length ? "备选：" + a.altScores.join("、") : ""}
+            ${a.altScoresText && a.altScoresText.length ? "备选：" + a.altScoresText.join("、") : ""}
           </div>
         </div>
 
@@ -92,15 +110,6 @@
         </div>
 
         <div class="card">
-          <div class="card-title">赔率（联网书商均值）</div>
-          <div class="info-grid">
-            <div class="info-item"><div class="label">主胜</div><div class="value">${m.odds?.home ?? "-"}</div></div>
-            <div class="info-item"><div class="label">平局</div><div class="value">${m.odds?.draw ?? "-"}</div></div>
-            <div class="info-item"><div class="label">客胜</div><div class="value">${m.odds?.away ?? "-"}</div></div>
-          </div>
-        </div>
-
-        <div class="card">
           <div class="card-title">模型指标</div>
           <div class="info-grid">
             <div class="info-item"><div class="label">${a.home} 实力</div><div class="value">${m.strength?.home ?? "-"}</div></div>
@@ -116,7 +125,7 @@
 
     loadMatches()
       .then(data => {
-        let match = findMatch(data, gameId);
+        let match = findMatch(data || [], gameId);
         if (!match) {
           try {
             const cached = JSON.parse(sessionStorage.getItem("fa_matches") || "[]");

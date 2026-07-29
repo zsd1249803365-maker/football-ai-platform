@@ -3,13 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>分析方案 - Football AI</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=5.3">
+  <style>
+    .odds-box {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: rgba(10,15,13,0.55);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+      font-variant-numeric: tabular-nums;
+    }
+    .odds-row { margin-bottom: 2px; }
+    .odds-prob { color: var(--primary); font-weight: 600; margin-top: 4px; }
+    .list-end {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.82rem;
+      padding: 12px 8px 4px;
+    }
+  </style>
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v4.4</span></h1>
-    <p>智能组合方案</p>
+    <h1>⚽ Football AI <span class="version">v5.3</span></h1>
+    <p>智能组合方案 · 一眼看清盘口与比分</p>
   </div>
 
   <nav class="nav">
@@ -20,54 +42,69 @@
   </nav>
 
   <div class="container">
+    <div class="source-tag" id="sourceTag">方案生成中...</div>
+
     <div class="card" id="safeCard">
-      <div class="card-title">⭐ 稳健方案 <span class="badge badge-risk-low">低风险</span></div>
-      <div id="safe" class="loading">生成中...</div>
+      <div class="card-title">稳健方案 <span class="badge badge-risk-low">低风险</span></div>
+      <div id="safe"><div class="loading">生成中...</div></div>
     </div>
 
     <div class="card" id="balanceCard">
-      <div class="card-title">⚖️ 平衡方案 <span class="badge badge-risk-mid">中风险</span></div>
-      <div id="balance" class="loading">生成中...</div>
+      <div class="card-title">平衡方案 <span class="badge badge-risk-mid">中风险</span></div>
+      <div id="balance"><div class="loading">生成中...</div></div>
     </div>
 
     <div class="card" id="riskCard">
-      <div class="card-title">🔥 博冷方案 <span class="badge badge-risk-high">高风险</span></div>
-      <div id="risk" class="loading">生成中...</div>
+      <div class="card-title">博冷方案 <span class="badge badge-risk-high">高风险</span></div>
+      <div id="risk"><div class="loading">生成中...</div></div>
     </div>
   </div>
 
-  <div class="footer">Football AI v4.4 · 理性参考</div>
+  <div class="footer">Football AI v5.3 · 理性参考</div>
 
-  <script src="js/score.js"></script>
+  <script src="js/score.js?v=5.3"></script>
   <script>
     function renderList(list) {
-      if (!list.length) return `<div class="report">暂无符合条件的比赛</div>`;
-      return list.slice(0, 5).map((g, i) => `
-        <div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+      if (!list.length) {
+        return `<div class="report">暂无符合条件的比赛</div><div class="list-end">— 本组结束 —</div>`;
+      }
+      const html = list.slice(0, 8).map((g, i) => `
+        <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
           <div class="match-name">${i + 1}. ${g.home} vs ${g.away}</div>
           <div class="match-league">${g.league}${g.kickoff ? " · " + formatKickoff(g.kickoff) : ""}</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0;align-items:center">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;align-items:center">
             <span class="badge ${pickBadgeClass(g.pickSide)}">${g.pick}</span>
+            <span class="badge ${riskBadgeClass(g.riskLevel)}">风险${g.risk}</span>
             <span class="stars">${g.starStr}</span>
           </div>
-          <div style="font-size:0.85rem;color:var(--text-muted)">
-            AI评分 ${g.homeScore} · 参考胜率 ${g.maxProb}% · 预测 ${g.predScore}
-          </div>
-          <a href="match-detail.html?game=${encodeURIComponent(g.id)}" style="font-size:0.85rem;color:var(--primary);text-decoration:none">查看详情 →</a>
+          ${oddsSnippet(g)}
+          <a href="match-detail.html?game=${encodeURIComponent(g.id)}" style="display:inline-block;margin-top:10px;font-size:0.85rem;color:var(--primary);text-decoration:none">完整分析报告 →</a>
         </div>
       `).join("");
+      return html + `<div class="list-end">— 本组共 ${Math.min(list.length, 8)} 场 —</div>`;
     }
 
     loadMatches()
       .then(data => {
-        const results = analyzeAll(data);
+        const results = analyzeAll(data || []);
+        const srcMap = {
+          "odds-api": "🟢 真实赔率",
+          thesportsdb: "🟡 综合赛程",
+          local: "🟡 本地",
+          cache: "🟡 缓存",
+        };
+        document.getElementById("sourceTag").textContent =
+          (srcMap[window.__DATA_SOURCE__] || "数据") + ` · 共 ${results.length} 场参与筛选`;
+
         document.getElementById("safe").innerHTML = renderList(results.filter(g => g.riskLevel === "low"));
         document.getElementById("balance").innerHTML = renderList(results.filter(g => g.riskLevel === "mid"));
         document.getElementById("risk").innerHTML = renderList(results.filter(g => g.riskLevel === "high"));
       })
       .catch(err => {
+        document.getElementById("sourceTag").textContent = "加载失败";
         ["safe", "balance", "risk"].forEach(id => {
-          document.getElementById(id).innerHTML = `<div class="report danger">${err.message}</div>`;
+          document.getElementById(id).innerHTML =
+            `<div class="report danger">${err.message}</div><div class="list-end">— 结束 —</div>`;
         });
       });
   </script>
