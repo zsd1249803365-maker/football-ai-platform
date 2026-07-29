@@ -8,7 +8,7 @@
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v4.2</span></h1>
+    <h1>⚽ Football AI <span class="version">v4.3</span></h1>
     <p>综合足球赛程 · 多维评分分析</p>
   </div>
 
@@ -29,7 +29,7 @@
 
     <div class="card">
       <div class="card-title">📡 数据状态</div>
-      <div id="dataStatus" class="info" style="font-size:0.9rem;color:var(--text-muted)">检测中...</div>
+      <div id="dataStatus" style="font-size:0.9rem;color:var(--text-muted)">检测中...</div>
     </div>
 
     <div class="card">
@@ -43,7 +43,7 @@
     </div>
   </div>
 
-  <div class="footer">Football AI · 综合赛事 · 仅供参考</div>
+  <div class="footer">Football AI v4.3 · 仅供参考</div>
 
   <script src="js/score.js"></script>
   <script>
@@ -51,9 +51,8 @@
       .then(data => {
         const results = analyzeAll(data);
         const srcMap = {
-          thesportsdb: "🟢 综合赛程（TheSportsDB）",
-          api: "🟢 实时数据",
-          jingcai: "🟢 竞彩开售",
+          "odds-api": "🟢 真实赔率（The Odds API）",
+          thesportsdb: "🟡 综合赛程（暂无真实赔率）",
           local: "🟡 本地数据",
         };
         const src = srcMap[window.__DATA_SOURCE__] || "🟢 在线数据";
@@ -67,27 +66,15 @@
 
         document.getElementById("statistics").innerHTML = `
           <div class="stats-row">
-            <div class="stat-box">
-              <div class="num">${results.length}</div>
-              <div class="label">比赛数</div>
-            </div>
-            <div class="stat-box">
-              <div class="num" style="color:var(--success)">${homeCount}</div>
-              <div class="label">主队优势</div>
-            </div>
-            <div class="stat-box">
-              <div class="num" style="color:var(--warning)">${drawCount}</div>
-              <div class="label">平局倾向</div>
-            </div>
-            <div class="stat-box">
-              <div class="num" style="color:var(--danger)">${awayCount}</div>
-              <div class="label">客队优势</div>
-            </div>
-          </div>
-        `;
+            <div class="stat-box"><div class="num">${results.length}</div><div class="label">比赛数</div></div>
+            <div class="stat-box"><div class="num" style="color:var(--success)">${homeCount}</div><div class="label">主队优势</div></div>
+            <div class="stat-box"><div class="num" style="color:var(--warning)">${drawCount}</div><div class="label">平局倾向</div></div>
+            <div class="stat-box"><div class="num" style="color:var(--danger)">${awayCount}</div><div class="label">客队优势</div></div>
+          </div>`;
 
         let html = "";
         results.slice(0, 6).forEach((g, i) => {
+          const oddsText = g.odds ? `主 ${g.odds.home} / 平 ${g.odds.draw} / 客 ${g.odds.away}` : "";
           html += `
             <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
               <div class="match-name">${i + 1}. ${g.home} vs ${g.away}</div>
@@ -98,9 +85,9 @@
                 <span class="badge ${riskBadgeClass(g.riskLevel)}">风险${g.risk}</span>
                 <span class="stars">${g.starStr}</span>
               </div>
-              <a class="btn btn-dark" href="match-detail.html?game=${g.id}" style="margin-top:12px;padding:10px">查看详细分析 →</a>
-            </div>
-          `;
+              ${oddsText ? `<div style="font-size:0.8rem;color:var(--text-muted);margin-top:6px">赔率 ${oddsText}</div>` : ""}
+              <a class="btn btn-dark" href="match-detail.html?game=${encodeURIComponent(g.id)}" style="margin-top:12px;padding:10px">查看详细分析 →</a>
+            </div>`;
         });
         document.getElementById("topGames").innerHTML = html || "暂无数据";
       })
