@@ -19,8 +19,8 @@
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v4.3</span></h1>
-    <p>比赛列表 · 联赛/风险筛选</p>
+    <h1>⚽ Football AI <span class="version">v4.4</span></h1>
+    <p>比赛列表 · 按开赛时间排序</p>
   </div>
 
   <nav class="nav">
@@ -35,13 +35,13 @@
 
     <div class="filters" id="leagueFilters">
       <button class="filter-btn active" data-league="">全部</button>
+      <button class="filter-btn" data-league="美职联">美职联</button>
+      <button class="filter-btn" data-league="巴甲">巴甲</button>
+      <button class="filter-btn" data-league="挪超">挪超</button>
+      <button class="filter-btn" data-league="瑞典超">瑞典超</button>
       <button class="filter-btn" data-league="英超">英超</button>
       <button class="filter-btn" data-league="西甲">西甲</button>
-      <button class="filter-btn" data-league="意甲">意甲</button>
       <button class="filter-btn" data-league="德甲">德甲</button>
-      <button class="filter-btn" data-league="法甲">法甲</button>
-      <button class="filter-btn" data-league="欧冠">欧冠</button>
-      <button class="filter-btn" data-league="美职联">美职联</button>
     </div>
 
     <div class="filters" id="riskFilters">
@@ -54,7 +54,7 @@
     <div id="list" class="loading">正在加载比赛...</div>
   </div>
 
-  <div class="footer">Football AI v4.3 · 仅供参考</div>
+  <div class="footer">Football AI v4.4 · 仅供参考</div>
 
   <script src="js/score.js"></script>
   <script>
@@ -64,15 +64,20 @@
 
     function render() {
       let list = allResults;
-      if (currentLeague) list = list.filter(g => g.league === currentLeague || String(g.league).includes(currentLeague));
+      if (currentLeague) {
+        list = list.filter(g => g.league === currentLeague || String(g.league).includes(currentLeague));
+      }
       if (currentRisk) list = list.filter(g => g.riskLevel === currentRisk);
       if (!list.length) {
-        document.getElementById("list").innerHTML = `<div class="card"><div class="report">暂无符合条件的比赛</div></div>`;
+        document.getElementById("list").innerHTML =
+          `<div class="card"><div class="report">暂无符合条件的比赛</div></div>`;
         return;
       }
       let html = "";
       list.forEach(g => {
-        const oddsText = g.odds ? `主 ${g.odds.home} / 平 ${g.odds.draw} / 客 ${g.odds.away}` : "";
+        const oddsText = g.odds
+          ? `主 ${g.odds.home} / 平 ${g.odds.draw} / 客 ${g.odds.away}`
+          : "";
         html += `
           <div class="card">
             <div class="match-name">${g.home} vs ${g.away}</div>
@@ -116,15 +121,16 @@
       document.getElementById("list").innerHTML = `<div class="loading">正在加载...</div>`;
       loadMatches(league || undefined)
         .then(data => {
-          allResults = analyzeAll(data);
-          const srcMap = { "odds-api": "🟢 真实赔率", thesportsdb: "🟡 综合赛程", local: "🟡 本地" };
+          allResults = analyzeAllByDate(data);
+          const srcMap = {
+            "odds-api": "🟢 真实赔率",
+            thesportsdb: "🟡 综合赛程",
+            local: "🟡 本地",
+            cache: "🟡 缓存",
+          };
           const src = srcMap[window.__DATA_SOURCE__] || "数据";
-          const time = window.__DATA_UPDATED__
-            ? " · " + new Date(window.__DATA_UPDATED__).toLocaleString("zh-CN")
-            : "";
           document.getElementById("sourceTag").textContent =
-            src + time + ` · 共 ${allResults.length} 场` +
-            (window.__DATA_NOTE__ ? " · " + window.__DATA_NOTE__ : "");
+            src + ` · 共 ${allResults.length} 场 · 按开赛时间排序`;
           render();
         })
         .catch(err => {

@@ -5,10 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>单场分析 - Football AI</title>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .report-block { white-space: pre-wrap; line-height: 1.7; font-size: 0.95rem; }
+  </style>
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v4.0</span></h1>
+    <h1>⚽ Football AI <span class="version">v4.4</span></h1>
     <p>单场深度分析</p>
   </div>
 
@@ -23,164 +26,117 @@
     <div class="loading">正在生成分析报告...</div>
   </div>
 
-  <div class="footer">Football AI Platform · 数据仅供参考</div>
+  <div class="footer">Football AI v4.4 · 仅供参考</div>
 
   <script src="js/score.js"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const gameId = params.get("game");
 
+    function render(match) {
+      const a = analyzeMatch(match);
+      const m = match;
+
+      document.getElementById("content").innerHTML = `
+        <div class="card">
+          <div class="match-name">${a.home} vs ${a.away}</div>
+          <div class="match-league">${a.league}${a.kickoff ? " · " + formatKickoff(a.kickoff) : ""}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <span class="badge ${pickBadgeClass(a.pickSide)}">${a.pick}</span>
+            <span class="badge ${riskBadgeClass(a.riskLevel)}">风险${a.risk}</span>
+            <span class="stars">${a.starStr}</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🤖 AI 深度分析</div>
+          <div class="report report-block">${a.report}</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🎯 最终建议</div>
+          <div class="report ${a.riskLevel === "low" ? "success" : a.riskLevel === "high" ? "danger" : ""}">
+            推荐：<strong>${a.pick}</strong><br>
+            风险：${a.risk}<br>
+            综合评分：主 ${a.homeScore} / 客 ${a.awayScore}<br>
+            预测比分：${a.predScore}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📊 胜平负概率</div>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="label">主胜</div>
+              <div class="value">${a.homeProb}%</div>
+              <div class="prob-bar"><div class="prob-bar-fill prob-home" style="width:${a.homeProb}%"></div></div>
+            </div>
+            <div class="info-item">
+              <div class="label">平局</div>
+              <div class="value">${a.drawProb}%</div>
+              <div class="prob-bar"><div class="prob-bar-fill prob-draw" style="width:${a.drawProb}%"></div></div>
+            </div>
+            <div class="info-item">
+              <div class="label">客胜</div>
+              <div class="value">${a.awayProb}%</div>
+              <div class="prob-bar"><div class="prob-bar-fill prob-away" style="width:${a.awayProb}%"></div></div>
+            </div>
+            <div class="info-item">
+              <div class="label">预测比分</div>
+              <div class="value">${a.predScore}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">💰 实时赔率</div>
+          <div class="info-grid">
+            <div class="info-item"><div class="label">主胜</div><div class="value">${m.odds?.home ?? "-"}</div></div>
+            <div class="info-item"><div class="label">平局</div><div class="value">${m.odds?.draw ?? "-"}</div></div>
+            <div class="info-item"><div class="label">客胜</div><div class="value">${m.odds?.away ?? "-"}</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🔥 模型指标</div>
+          <div class="info-grid">
+            <div class="info-item"><div class="label">${a.home} 实力</div><div class="value">${m.strength?.home ?? "-"}</div></div>
+            <div class="info-item"><div class="label">${a.away} 实力</div><div class="value">${m.strength?.away ?? "-"}</div></div>
+            <div class="info-item"><div class="label">${a.home} xG</div><div class="value">${m.xg?.home ?? "-"}</div></div>
+            <div class="info-item"><div class="label">${a.away} xG</div><div class="value">${m.xg?.away ?? "-"}</div></div>
+          </div>
+        </div>
+
+        <a class="btn btn-dark" href="matches.html">← 返回比赛列表</a>
+      `;
+    }
+
     loadMatches()
       .then(data => {
-        const match = data.find(m => m.id === gameId);
+        let match = findMatch(data, gameId);
         if (!match) {
-          document.getElementById("content").innerHTML = `<div class="card"><div class="report danger">未找到比赛 ID: ${gameId}</div></div>`;
+          // 再试缓存
+          try {
+            const cached = JSON.parse(sessionStorage.getItem("fa_matches") || "[]");
+            match = findMatch(cached, gameId);
+          } catch (_) {}
+        }
+        if (!match) {
+          document.getElementById("content").innerHTML = `
+            <div class="card">
+              <div class="report danger">未找到该场比赛</div>
+              <p style="color:var(--text-muted);font-size:0.9rem;margin-top:12px">
+                可能是数据已刷新，或链接已过期。请从比赛列表重新进入。
+              </p>
+              <a class="btn btn-primary" href="matches.html">返回比赛列表</a>
+            </div>`;
           return;
         }
-
-        const a = analyzeMatch(match);
-        const m = match;
-
-        const injuryHomeText = (m.injury?.home?.players || []).map(p => `${p.name}(${p.position})`).join(", ") || "无明显伤停";
-        const injuryAwayText = (m.injury?.away?.players || []).map(p => `${p.name}(${p.position})`).join(", ") || "无明显伤停";
-
-        document.getElementById("content").innerHTML = `
-          <div class="card">
-            <div class="match-name">${a.home} vs ${a.away}</div>
-            <div class="match-league">${a.league}</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-              <span class="badge ${pickBadgeClass(a.pickSide)}">${a.pick}</span>
-              <span class="badge ${riskBadgeClass(a.riskLevel)}">风险${a.risk}</span>
-              <span class="stars">${a.starStr}</span>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">🤖 AI 赛前报告</div>
-            <div class="report">
-              ${m.ai_market?.analysis || "暂无分析"}<br><br>
-              预测比分：<strong>${a.predScore}</strong><br>
-              推荐方向：<strong>${a.pick}</strong>（主 ${a.homeProb}% / 平 ${a.drawProb}% / 客 ${a.awayProb}%）
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">🎯 AI 最终建议</div>
-            <div class="report ${a.riskLevel === "low" ? "success" : a.riskLevel === "high" ? "danger" : ""}">
-              推荐：${a.pick}<br>
-              风险等级：${a.risk}<br>
-              AI 综合评分：主队 ${a.homeScore} / 客队 ${a.awayScore}
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">📊 胜平负概率</div>
-            <div class="info-grid">
-              <div class="info-item">
-                <div class="label">主胜</div>
-                <div class="value">${a.homeProb}%</div>
-                <div class="prob-bar"><div class="prob-bar-fill prob-home" style="width:${a.homeProb}%"></div></div>
-              </div>
-              <div class="info-item">
-                <div class="label">平局</div>
-                <div class="value">${a.drawProb}%</div>
-                <div class="prob-bar"><div class="prob-bar-fill prob-draw" style="width:${a.drawProb}%"></div></div>
-              </div>
-              <div class="info-item">
-                <div class="label">客胜</div>
-                <div class="value">${a.awayProb}%</div>
-                <div class="prob-bar"><div class="prob-bar-fill prob-away" style="width:${a.awayProb}%"></div></div>
-              </div>
-              <div class="info-item">
-                <div class="label">预测比分</div>
-                <div class="value">${a.predScore}</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">🔥 球队实力</div>
-            <div class="info-grid">
-              <div class="info-item"><div class="label">${a.home}</div><div class="value">${m.strength?.home ?? "-"}</div></div>
-              <div class="info-item"><div class="label">${a.away}</div><div class="value">${m.defense?.away ?? "-"}</div></div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">📈 近期状态</div>
-            <div class="info-grid">
-              <div class="info-item"><div class="label">${a.home}</div><div class="value">${m.form?.detail?.home ?? "-"}</div></div>
-              <div class="info-item"><div class="label">${a.away}</div><div class="value">${m.form?.detail?.away ?? "-"}</div></div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">⚡ xG 数据</div>
-            <div class="info-grid">
-              <div class="info-item"><div class="label">${a.home}</div><div class="value">${m.xg?.home ?? "-"}</div></div>
-              <div class="info-item"><div class="label">${a.away}</div><div class="value">${m.xg?.away ?? "-"}</div></div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">🛡 防守能力</div>
-            <div class="info-grid">
-              <div class="info-item"><div class="label">${a.home}</div><div class="value">${m.defense?.home ?? "-"}</div></div>
-              <div class="info-item"><div class="label">${a.away}</div><div class="value">${m.defense?.away ?? "-"}</div></div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">💰 欧赔</div>
-            <div class="info-grid">
-              <div class="info-item"><div class="label">主胜</div><div class="value">${m.odds?.home ?? "-"}</div></div>
-              <div class="info-item"><div class="label">平局</div><div class="value">${m.odds?.draw ?? "-"}</div></div>
-              <div class="info-item"><div class="label">客胜</div><div class="value">${m.odds?.away ?? "-"}</div></div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">⚽ 竞彩盘口</div>
-            <div class="info">
-              让球：${m.market?.asian_handicap?.line ?? "-"}<br>
-              ${m.market?.asian_handicap?.home ?? ""} / ${m.market?.asian_handicap?.away ?? ""}<br>
-              大小球：${m.market?.goal?.line ?? "-"}
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">📉 盘口走势</div>
-            <div class="info">${m.market_analysis?.trend ?? "-"}<br>${m.market_analysis?.risk_note ?? ""}</div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">🚑 伤停影响</div>
-            <div class="info">
-              ${a.home}：${injuryHomeText}（影响 ${m.injury?.home?.totalImpact ?? 0}）<br>
-              ${a.away}：${injuryAwayText}（影响 ${m.injury?.away?.totalImpact ?? 0}）
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">🔥 战意 / 赛程 / 风格</div>
-            <div class="info">
-              战意：${m.motivation?.level ?? "-"}（影响 ${m.motivation?.impact ?? 0}）<br>
-              赛程：${m.schedule?.recent_match ?? "-"}（疲劳 ${m.schedule?.fatigue ?? 0}）<br>
-              轮换：${m.rotation?.risk ?? "-"}<br>
-              风格：${m.style_match?.matchup ?? "-"}
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">💰 市场逻辑</div>
-            <div class="info">${m.market_logic?.bookmaker_signal ?? "-"}</div>
-          </div>
-
-          <a class="btn btn-dark" href="matches.html">← 返回比赛列表</a>
-        `;
+        render(match);
       })
       .catch(err => {
-        document.getElementById("content").innerHTML = `<div class="card"><div class="report danger">${err.message}</div></div>`;
+        document.getElementById("content").innerHTML =
+          `<div class="card"><div class="report danger">${err.message}</div></div>`;
       });
   </script>
 </body>

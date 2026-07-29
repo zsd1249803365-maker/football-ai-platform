@@ -8,7 +8,7 @@
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v4.0</span></h1>
+    <h1>⚽ Football AI <span class="version">v4.4</span></h1>
     <p>AI 智能筛选排行榜</p>
   </div>
 
@@ -23,7 +23,7 @@
     <div id="list" class="loading">正在计算排名...</div>
   </div>
 
-  <div class="footer">Football AI Platform · 评分越高越推荐</div>
+  <div class="footer">Football AI v4.4 · 评分越高越推荐</div>
 
   <script src="js/score.js"></script>
   <script>
@@ -31,12 +31,11 @@
       .then(data => {
         const results = analyzeAll(data);
         let html = "";
-
         results.forEach((item, index) => {
           html += `
             <div class="card">
               <div class="match-name">${index + 1}. ${item.home} vs ${item.away}</div>
-              <div class="match-league">${item.league}</div>
+              <div class="match-league">${item.league}${item.kickoff ? " · " + formatKickoff(item.kickoff) : ""}</div>
               <div class="score-big">${item.homeScore}</div>
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0">
                 <span class="badge ${pickBadgeClass(item.pickSide)}">推荐：${item.pick}</span>
@@ -64,15 +63,14 @@
                   <div class="value">${item.predScore}</div>
                 </div>
               </div>
-              <a class="btn btn-dark" href="match-detail.html?game=${item.id}">查看详细分析</a>
-            </div>
-          `;
+              <a class="btn btn-dark" href="match-detail.html?game=${encodeURIComponent(item.id)}">查看详细分析</a>
+            </div>`;
         });
-
         document.getElementById("list").innerHTML = html || "<div class=\"card\">暂无数据</div>";
       })
       .catch(err => {
-        document.getElementById("list").innerHTML = `<div class="card"><div class="report danger">读取失败：${err.message}</div></div>`;
+        document.getElementById("list").innerHTML =
+          `<div class="card"><div class="report danger">读取失败：${err.message}</div></div>`;
       });
   </script>
 </body>

@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>竞彩方案 - Football AI</title>
+  <title>分析方案 - Football AI</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v4.0</span></h1>
-    <p>竞彩智能组合生成</p>
+    <h1>⚽ Football AI <span class="version">v4.4</span></h1>
+    <p>智能组合方案</p>
   </div>
 
   <nav class="nav">
@@ -20,14 +20,6 @@
   </nav>
 
   <div class="container">
-    <div class="card">
-      <div class="card-title">💰 投注金额</div>
-      <div class="input-group">
-        <label>参考金额（仅展示用）</label>
-        <input type="number" id="amount" value="100" min="10" step="10">
-      </div>
-    </div>
-
     <div class="card" id="safeCard">
       <div class="card-title">⭐ 稳健方案 <span class="badge badge-risk-low">低风险</span></div>
       <div id="safe" class="loading">生成中...</div>
@@ -44,7 +36,7 @@
     </div>
   </div>
 
-  <div class="footer">Football AI Platform · 理性购彩，量力而行</div>
+  <div class="footer">Football AI v4.4 · 理性参考</div>
 
   <script src="js/score.js"></script>
   <script>
@@ -53,6 +45,7 @@
       return list.slice(0, 5).map((g, i) => `
         <div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)">
           <div class="match-name">${i + 1}. ${g.home} vs ${g.away}</div>
+          <div class="match-league">${g.league}${g.kickoff ? " · " + formatKickoff(g.kickoff) : ""}</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0;align-items:center">
             <span class="badge ${pickBadgeClass(g.pickSide)}">${g.pick}</span>
             <span class="stars">${g.starStr}</span>
@@ -60,7 +53,7 @@
           <div style="font-size:0.85rem;color:var(--text-muted)">
             AI评分 ${g.homeScore} · 参考胜率 ${g.maxProb}% · 预测 ${g.predScore}
           </div>
-          <a href="match-detail.html?game=${g.id}" style="font-size:0.85rem;color:var(--primary);text-decoration:none">查看详情 →</a>
+          <a href="match-detail.html?game=${encodeURIComponent(g.id)}" style="font-size:0.85rem;color:var(--primary);text-decoration:none">查看详情 →</a>
         </div>
       `).join("");
     }
@@ -68,14 +61,9 @@
     loadMatches()
       .then(data => {
         const results = analyzeAll(data);
-
-        const safe = results.filter(g => g.riskLevel === "low");
-        const balance = results.filter(g => g.riskLevel === "mid");
-        const risk = results.filter(g => g.riskLevel === "high");
-
-        document.getElementById("safe").innerHTML = renderList(safe);
-        document.getElementById("balance").innerHTML = renderList(balance);
-        document.getElementById("risk").innerHTML = renderList(risk);
+        document.getElementById("safe").innerHTML = renderList(results.filter(g => g.riskLevel === "low"));
+        document.getElementById("balance").innerHTML = renderList(results.filter(g => g.riskLevel === "mid"));
+        document.getElementById("risk").innerHTML = renderList(results.filter(g => g.riskLevel === "high"));
       })
       .catch(err => {
         ["safe", "balance", "risk"].forEach(id => {

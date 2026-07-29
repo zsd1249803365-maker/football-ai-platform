@@ -1,7 +1,117 @@
 /**
- * Football AI Scoring Engine v4.2
- * 综合赛程 + 本地回退
+ * Football AI Scoring Engine v4.4
+ * 中文队名 · 深度分析 · 按日期排序 · 详情缓存
  */
+
+const TEAM_ZH = {
+  // 巴甲
+  Internacional: "国际",
+  Flamengo: "弗拉门戈",
+  Mirassol: "米拉索",
+  Remo: "雷莫",
+  Fluminense: "弗鲁米嫩塞",
+  Bahia: "巴伊亚",
+  Vitoria: "维多利亚",
+  Palmeiras: "帕尔梅拉斯",
+  Corinthians: "科林蒂安",
+  "Atletico Paranaense": "巴拉纳竞技",
+  Coritiba: "科里蒂巴",
+  Cruzeiro: "克鲁塞罗",
+  "Grêmio": "格雷米奥",
+  Gremio: "格雷米奥",
+  "Sao Paulo": "圣保罗",
+  "Atletico Mineiro": "米内罗竞技",
+  Chapecoense: "沙佩科",
+  Botafogo: "博塔弗戈",
+  "Vasco da Gama": "瓦斯科达伽马",
+  Santos: "桑托斯",
+  "Bragantino-SP": "布拉加antino",
+  Bragantino: "布拉加antino",
+  // 美职联
+  "New York City FC": "纽约城",
+  "Toronto FC": "多伦多FC",
+  "Philadelphia Union": "费城联",
+  "Atlanta United FC": "亚特兰大联",
+  "CF Montreal": "蒙特利尔",
+  "New England Revolution": "新英格兰革命",
+  "Inter Miami CF": "迈阿密国际",
+  "Columbus Crew SC": "哥伦布机员",
+  "D.C. United": "华盛顿联",
+  "Nashville SC": "纳什维尔",
+  "FC Cincinnati": "辛辛那提",
+  "San Jose Earthquakes": "圣何塞地震",
+  "Vancouver Whitecaps FC": "温哥华白帽",
+  "Los Angeles FC": "洛杉矶FC",
+  "New York Red Bulls": "纽约红牛",
+  "Orlando City SC": "奥兰多城",
+  "Chicago Fire": "芝加哥火焰",
+  "Charlotte FC": "夏洛特FC",
+  "Sporting Kansas City": "堪萨斯城体育",
+  "Houston Dynamo": "休斯敦迪纳摩",
+  "Minnesota United FC": "明尼苏达联",
+  "San Diego FC": "圣地亚哥FC",
+  "St. Louis City SC": "圣路易斯城",
+  "Real Salt Lake": "盐湖城实时",
+  "Colorado Rapids": "科罗拉多急流",
+  "Austin FC": "奥斯汀FC",
+  "LA Galaxy": "洛杉矶银河",
+  "FC Dallas": "达拉斯FC",
+  "Portland Timbers": "波特兰伐木者",
+  "Seattle Sounders FC": "西雅图海湾人",
+  // 挪超
+  "Vålerenga": "瓦勒伦加",
+  HamKam: "汉坎",
+  "Bodø/Glimt": "博德闪耀",
+  Lillestrom: "利勒斯特罗姆",
+  "Fredrikstad FK": "腓特烈斯塔",
+  Sandefjord: "桑纳菲尤尔",
+  "IK Start": "斯达特",
+  "Viking FK": "维京",
+  Aalesund: "奥勒松",
+  Tromso: "特罗姆瑟",
+  KFUM: "KFUM奥斯陆",
+  "Kristiansund BK": "克里斯蒂安松",
+  Molde: "莫尔德",
+  "Sarpsborg FK": "萨尔普斯堡",
+  "SK Brann": "布兰",
+  Rosenborg: "罗森博格",
+  // 瑞典超
+  "BK Hacken": "哈肯",
+  "Kalmar FF": "卡尔马",
+  "IFK Goteborg": "哥德堡",
+  "Degerfors IF": "德格福什",
+  "IF Brommapojkarna": "布罗马波伊卡纳",
+  "Malmo FF": "马尔默",
+  AIK: "AIK索尔纳",
+  "Örgryte IS": "厄尔格力特",
+  "Djurgardens IF": "佐加顿斯",
+  "Västerås SK": "韦斯特罗斯",
+  "Halmstads BK": "哈尔姆斯塔德",
+  "IK Sirius": "天狼星",
+  // 欧陆常见
+  Arsenal: "阿森纳",
+  "Bayern Munich": "拜仁慕尼黑",
+  Stuttgart: "斯图加特",
+  Marseille: "马赛",
+  Strasbourg: "斯特拉斯堡",
+  Udinese: "乌迪内斯",
+  Como: "科莫",
+  "Deportivo Alavés": "阿拉维斯",
+  Getafe: "赫塔费",
+  "Coventry City": "考文垂",
+};
+
+function toZh(name) {
+  if (!name) return "未知";
+  if (TEAM_ZH[name]) return TEAM_ZH[name];
+  // 模糊：去掉 FC / SC / CF 等后缀再试
+  const cleaned = String(name).replace(/\s+(FC|SC|CF|FK|BK|IF|SK|United)$/i, "").trim();
+  if (TEAM_ZH[cleaned]) return TEAM_ZH[cleaned];
+  for (const [en, zh] of Object.entries(TEAM_ZH)) {
+    if (en.toLowerCase() === String(name).toLowerCase()) return zh;
+  }
+  return name; // 找不到则保留原文
+}
 
 function num(v) {
   const n = Number(v);
@@ -15,6 +125,115 @@ function safe(obj, path, def = 0) {
   } catch {
     return def;
   }
+}
+
+/** 根据赔率与概率生成更有信息量的中文分析 */
+function buildAnalysis(ctx) {
+  const {
+    home,
+    away,
+    league,
+    homeProb,
+    drawProb,
+    awayProb,
+    pick,
+    risk,
+    riskLevel,
+    predScore,
+    odds,
+    heatRisk,
+    homeScore,
+    awayScore,
+    gap,
+  } = ctx;
+
+  const od = odds || { home: 2.2, draw: 3.3, away: 3.2 };
+  const lines = [];
+
+  // 开场定位
+  lines.push(
+    `【${league}】${home} 对阵 ${away}。市场给出主胜 ${od.home}、平 ${od.draw}、客胜 ${od.away}。`
+  );
+
+  // 赔率结构解读
+  const invH = 1 / od.home;
+  const invD = 1 / od.draw;
+  const invA = 1 / od.away;
+  const sum = invH + invD + invA;
+  const mktH = (invH / sum) * 100;
+  const mktA = (invA / sum) * 100;
+  const mktD = (invD / sum) * 100;
+
+  if (od.home <= 1.4) {
+    lines.push(
+      `主队被大幅看高（主胜赔仅 ${od.home}），市场隐含主胜约 ${mktH.toFixed(0)}%。此类盘口一旦爆冷损失大，需警惕平局或客队偷分。`
+    );
+  } else if (od.home <= 1.85) {
+    lines.push(
+      `主队略受追捧（主 ${od.home}），隐含主胜约 ${mktH.toFixed(0)}%。优势存在，但并非一边倒，平局仍有约 ${mktD.toFixed(0)}% 的市场空间。`
+    );
+  } else if (od.away <= 1.85) {
+    lines.push(
+      `客队更被看好（客 ${od.away}），隐含客胜约 ${mktA.toFixed(0)}%。客场作战仍能开出低赔，说明基本面或状态明显占优。`
+    );
+  } else {
+    lines.push(
+      `双方实力接近，主 ${od.home} / 平 ${od.draw} / 客 ${od.away}，三角盘较均衡，结果弹性大，更适合稳健或观望。`
+    );
+  }
+
+  // AI 与市场偏差
+  const aiH = homeProb;
+  const delta = aiH - mktH;
+  if (Math.abs(delta) >= 6) {
+    if (delta > 0) {
+      lines.push(
+        `模型给主队的概率（${aiH.toFixed(0)}%）高于市场隐含（${mktH.toFixed(0)}%）约 ${delta.toFixed(0)} 个百分点，主胜方向或存在一定「价值」。`
+      );
+    } else {
+      lines.push(
+        `模型对主队更谨慎（${aiH.toFixed(0)}%），低于市场约 ${Math.abs(delta).toFixed(0)} 个点，需防市场过热、实际出线不如赔率显示的稳。`
+      );
+    }
+  } else {
+    lines.push(
+      `模型概率与市场隐含较为接近（主 ${aiH.toFixed(0)}% vs 市 ${mktH.toFixed(0)}%），分歧不大，可更多参考盘口本身与风险偏好。`
+    );
+  }
+
+  // 推荐逻辑
+  if (pick === "主胜") {
+    lines.push(
+      `综合评分主 ${homeScore} / 客 ${awayScore}，主胜概率 ${homeProb.toFixed(0)}%，平 ${drawProb.toFixed(0)}%，客 ${awayProb.toFixed(0)}%。倾向主胜，预测比分 ${predScore}。`
+    );
+  } else if (pick === "客胜") {
+    lines.push(
+      `客队评分与概率更占优（客胜 ${awayProb.toFixed(0)}%），主 ${homeProb.toFixed(0)}% / 平 ${drawProb.toFixed(0)}%。倾向客胜，预测 ${predScore}。`
+    );
+  } else {
+    lines.push(
+      `胜负概率接近（主 ${homeProb.toFixed(0)}% / 平 ${drawProb.toFixed(0)}% / 客 ${awayProb.toFixed(0)}%），更适合防平或观望，预测 ${predScore}。`
+    );
+  }
+
+  // 风险与操作建议
+  if (riskLevel === "high" || heatRisk <= -2) {
+    lines.push(
+      `风险偏高：${heatRisk <= -2 ? "热门过热，易生冷门；" : ""}概率差距不够大或盘口偏极端。建议控制仓位，不宜重注单边。`
+    );
+  } else if (riskLevel === "low" && gap >= 20) {
+    lines.push(
+      `方向相对清晰，概率差距约 ${gap.toFixed(0)} 个点，可作为稳健参考；仍需结合临场伤停与战意再确认。`
+    );
+  } else {
+    lines.push(
+      `中等风险：有倾向但不够「锁死」。可用小注验证思路，或等临场再决定是否跟进。`
+    );
+  }
+
+  lines.push(`结论：推荐【${pick}】，风险【${risk}】。数据仅供参考，请理性决策。`);
+
+  return lines.join("\n\n");
 }
 
 function analyzeMatch(match) {
@@ -119,11 +338,35 @@ function analyzeMatch(match) {
   else if (homeProb > 40) predScore = "2-1";
   else if (drawProb > 36) predScore = "1-1";
 
+  const homeZh = toZh(match.home);
+  const awayZh = toZh(match.away);
+  const league = match.league || "未知";
+
+  const report = buildAnalysis({
+    home: homeZh,
+    away: awayZh,
+    league,
+    homeProb,
+    drawProb,
+    awayProb,
+    pick,
+    risk,
+    riskLevel,
+    predScore,
+    odds: match.odds,
+    heatRisk,
+    homeScore: Math.round(homeScore * 10) / 10,
+    awayScore: Math.round(awayScore * 10) / 10,
+    gap,
+  });
+
   return {
-    id: match.id || "",
-    home: match.home || "主队",
-    away: match.away || "客队",
-    league: match.league || "未知",
+    id: String(match.id || ""),
+    home: homeZh,
+    away: awayZh,
+    homeEn: match.home || "",
+    awayEn: match.away || "",
+    league,
     kickoff: match.kickoff || "",
     homeScore: Math.round(homeScore * 10) / 10,
     awayScore: Math.round(awayScore * 10) / 10,
@@ -140,12 +383,28 @@ function analyzeMatch(match) {
     maxProb: Math.round(maxProb * 10) / 10,
     odds: match.odds || null,
     source: match.source || "local",
+    report,
     raw: match,
   };
 }
 
+/** 按开赛时间从近到远 */
+function sortByKickoff(list) {
+  return [...list].sort((a, b) => {
+    const ta = new Date(a.kickoff || 0).getTime() || 0;
+    const tb = new Date(b.kickoff || 0).getTime() || 0;
+    return ta - tb;
+  });
+}
+
+/** 按 AI 评分从高到低（排行榜用） */
 function analyzeAll(matches) {
   return matches.map(analyzeMatch).sort((a, b) => b.homeScore - a.homeScore);
+}
+
+/** 分析后按日期排序（列表页用） */
+function analyzeAllByDate(matches) {
+  return sortByKickoff(matches.map(analyzeMatch));
 }
 
 async function loadMatches(leagueFilter) {
@@ -158,6 +417,11 @@ async function loadMatches(leagueFilter) {
         window.__DATA_SOURCE__ = data.source || "api";
         window.__DATA_UPDATED__ = data.updatedAt;
         window.__DATA_NOTE__ = data.note || "";
+        // 缓存供详情页使用，避免「未找到比赛」
+        try {
+          sessionStorage.setItem("fa_matches", JSON.stringify(data.matches));
+          sessionStorage.setItem("fa_matches_at", data.updatedAt || "");
+        } catch (_) {}
         return data.matches;
       }
     }
@@ -165,15 +429,40 @@ async function loadMatches(leagueFilter) {
     console.warn("API 不可用，使用本地数据", e);
   }
 
+  // 尝试 session 缓存
+  try {
+    const cached = sessionStorage.getItem("fa_matches");
+    if (cached) {
+      let list = JSON.parse(cached);
+      if (leagueFilter) list = list.filter((m) => m.league === leagueFilter);
+      if (list.length) {
+        window.__DATA_SOURCE__ = "cache";
+        return list;
+      }
+    }
+  } catch (_) {}
+
   const res = await fetch("matches.json?t=" + Date.now());
   if (!res.ok) throw new Error("HTTP " + res.status);
   const data = await res.json();
   let list = Array.isArray(data) ? data : [];
-  if (leagueFilter) {
-    list = list.filter((m) => m.league === leagueFilter);
-  }
+  if (leagueFilter) list = list.filter((m) => m.league === leagueFilter);
   window.__DATA_SOURCE__ = "local";
+  try {
+    sessionStorage.setItem("fa_matches", JSON.stringify(list));
+  } catch (_) {}
   return list;
+}
+
+/** 详情页：按 id 查找，找不到再用主客队名 */
+function findMatch(list, gameId) {
+  if (!gameId) return null;
+  const id = decodeURIComponent(String(gameId));
+  let m = list.find((x) => String(x.id) === id);
+  if (m) return m;
+  // 兼容旧链接或编码差异
+  m = list.find((x) => String(x.id) === gameId);
+  return m || null;
 }
 
 function pickBadgeClass(side) {
@@ -196,6 +485,7 @@ function formatKickoff(iso) {
     return d.toLocaleString("zh-CN", {
       month: "numeric",
       day: "numeric",
+      weekday: "short",
       hour: "2-digit",
       minute: "2-digit",
     });

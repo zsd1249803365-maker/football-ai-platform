@@ -8,7 +8,7 @@
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v4.3</span></h1>
+    <h1>⚽ Football AI <span class="version">v4.4</span></h1>
     <p>综合足球赛程 · 多维评分分析</p>
   </div>
 
@@ -22,7 +22,7 @@
   <div class="container">
     <div class="card">
       <div class="card-title">🚀 系统入口</div>
-      <a class="btn btn-primary" href="matches.html">⚽ 比赛列表（支持筛选）</a>
+      <a class="btn btn-primary" href="matches.html">⚽ 比赛列表（按日期）</a>
       <a class="btn btn-success" href="ai-ranking.html">📊 AI 排行榜</a>
       <a class="btn btn-warning" href="ai-bet.html">🎫 分析方案</a>
     </div>
@@ -38,27 +38,28 @@
     </div>
 
     <div class="card">
-      <div class="card-title">🔥 AI 精选比赛</div>
+      <div class="card-title">🗓 最近比赛</div>
       <div id="topGames" class="loading">正在分析...</div>
     </div>
   </div>
 
-  <div class="footer">Football AI v4.3 · 仅供参考</div>
+  <div class="footer">Football AI v4.4 · 仅供参考</div>
 
   <script src="js/score.js"></script>
   <script>
     loadMatches()
       .then(data => {
+        const byDate = analyzeAllByDate(data);
         const results = analyzeAll(data);
         const srcMap = {
           "odds-api": "🟢 真实赔率（The Odds API）",
-          thesportsdb: "🟡 综合赛程（暂无真实赔率）",
+          thesportsdb: "🟡 综合赛程",
           local: "🟡 本地数据",
+          cache: "🟡 缓存",
         };
         const src = srcMap[window.__DATA_SOURCE__] || "🟢 在线数据";
         document.getElementById("dataStatus").textContent =
-          src + ` · ${results.length} 场` +
-          (window.__DATA_NOTE__ ? " · " + window.__DATA_NOTE__ : "");
+          src + ` · ${results.length} 场`;
 
         const homeCount = results.filter(r => r.pickSide === "home").length;
         const drawCount = results.filter(r => r.pickSide === "draw").length;
@@ -73,14 +74,13 @@
           </div>`;
 
         let html = "";
-        results.slice(0, 6).forEach((g, i) => {
+        byDate.slice(0, 8).forEach((g, i) => {
           const oddsText = g.odds ? `主 ${g.odds.home} / 平 ${g.odds.draw} / 客 ${g.odds.away}` : "";
           html += `
             <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
               <div class="match-name">${i + 1}. ${g.home} vs ${g.away}</div>
               <div class="match-league">${g.league}${g.kickoff ? " · " + formatKickoff(g.kickoff) : ""}</div>
               <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px">
-                <span class="score-big" style="font-size:1.4rem">${g.homeScore}</span>
                 <span class="badge ${pickBadgeClass(g.pickSide)}">${g.pick}</span>
                 <span class="badge ${riskBadgeClass(g.riskLevel)}">风险${g.risk}</span>
                 <span class="stars">${g.starStr}</span>
