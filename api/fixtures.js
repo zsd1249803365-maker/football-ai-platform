@@ -1,14 +1,9 @@
 /**
- * Football AI fixtures API v4.3
- * 优先 The Odds API 真实赔率；失败则 TheSportsDB 赛程；再失败返回空让前端用本地 JSON
- *
- * Vercel 环境变量（任选其一）:
- *   THE_ODDS_API_KEY  （推荐）
- *   ODDS_API_KEY
+ * Football AI fixtures API v5.3
+ * The Odds API: h2h + spreads + totals
  */
 
 const ODDS_SPORTS = [
-  // 夏季仍有比赛的联赛优先
   { key: "soccer_usa_mls", name: "美职联" },
   { key: "soccer_sweden_allsvenskan", name: "瑞典超" },
   { key: "soccer_norway_eliteserien", name: "挪超" },
@@ -45,42 +40,95 @@ function getOddsKey() {
 }
 
 async function getJson(url) {
-  const res = await fetch(url, {
-    headers: { "User-Agent": "FootballAI/4.3" },
-  });
+  const res = await fetch(url, { headers: { "User-Agent": "FootballAI/5.3" } });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
 
-function avgH2H(bookmakers, homeName, awayName) {
-  const homes = [];
-  const draws = [];
-  const aways = [];
+function avg(arr, def) {
+  return arr.length ? +(arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2) : def;
+}
+
+function extractMarkets(bookmakers, homeName, awayName) {
+  const homes = [], draws = [], aways = [];
+  const spreadHome = [], spreadAway = [], spreadLines = [];
+  const overs = [], unders = [], totalLines = [];
   const homeL = (homeName || "").toLowerCase();
   const awayL = (awayName || "").toLowerCase();
+
   for (const bk of bookmakers || []) {
-    const m = (bk.markets || []).find((x) => x.key === "h2h");
-    if (!m?.outcomes) continue;
-    for (const o of m.outcomes) {
-      const p = parseFloat(o.price);
-      if (!p) continue;
-      const n = (o.name || "").toLowerCase();
-      if (n === "draw") draws.push(p);
-      else if (n === homeL || o.name === homeName) homes.push(p);
-      else if (n === awayL || o.name === awayName) aways.push(p);
+    for (const m of bk.markets || []) {
+      if (m.key === "h2h") {
+        for (const o of m.outcomes || []) {
+          const p = parseFloat(o.price);
+          if (!p) continue;
+          const n = (o.name || "").toLowerCase();
+          if (n === "draw") draws.push(p);
+          else if (n === homeL || o.name === homeName) homes.push(p);
+          else if (n === awayL || o.name === awayName) aways.push(p);
+        }
+      }
+      if (m.key === "spreads") {
+        for (const o of m.outcomes || []) {
+          const p = parseFloat(o.price);
+          const point = parseFloat(o.point);
+          if (!p || isNaN(point)) continue;
+          const n = (o.name || "").toLowerCase();
+          if (n === homeL || o.name === homeName) {
+            spreadHome.push(p);
+            spreadLines.push(point);
+          } else if (n === awayL || o.name === awayName) {
+            spreadAway.push(p);
+          }
+        }
+      }
+      if (m.key === "totals") {
+        for (const o of m.outcomes || []) {
+          const p = parseFloat(o.price);
+          const point = parseFloat(o.point);
+          if (!p) continue;
+          const n = (o.name || "").toLowerCase();
+          if (n === "over") {
+            overs.push(p);
+            if (!isNaN(point)) totalLines.push(point);
+          } else if (n === "under") unders.push(p);
+        }
+      }
     }
   }
-  const avg = (arr, def) =>
-    arr.length ? +(arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2) : def;
+
+  const line = spreadLines.length
+    ? spreadLines.sort((a, b) => a - b)[Math.floor(spreadLines.length / 2)]
+    : null;
+  const tLine = totalLines.length
+    ? totalLines.sort((a, b) => a - b)[Math.floor(totalLines.length / 2)]
+    : 2.5;
+
   return {
-    home: avg(homes, 2.2),
-    draw: avg(draws, 3.3),
-    away: avg(aways, 3.2),
+    odds: {
+      home: avg(homes, 2.2),
+      draw: avg(draws, 3.3),
+      away: avg(aways, 3.2),
+    },
+    asian: {
+      line: line != null ? (line > 0 ? "+" + line : String(line)) : "-",
+      lineNum: line,
+      home: avg(spreadHome, null),
+      away: avg(spreadAway, null),
+    },
+    totals: {
+      line: String(tLine),
+      over: avg(overs, null),
+      under: avg(unders, null),
+    },
   };
 }
 
-function mapWithOdds(home, away, league, kickoff, id, odds, extra = {}) {
-  const od = odds || { home: 2.2, draw: 3.3, away: 3.2 };
+function mapWithOdds(home, away, league, kickoff, id, markets, extra = {}) {
+  const od = markets?.odds || { home: 2.2, draw: 3.3, away: 3.2 };
+  const asian = markets?.asian || { line: "-", home: null, away: null };
+  const totals = markets?.totals || { line: "2.5", over: null, under: null };
+
   const invH = 1 / (od.home || 2.2);
   const invD = 1 / (od.draw || 3.3);
   const invA = 1 / (od.away || 3.2);
@@ -93,6 +141,15 @@ function mapWithOdds(home, away, league, kickoff, id, odds, extra = {}) {
   const heatRisk = heat === "高" ? -2 : heat === "中" ? -1 : 0;
   const hasOdds = !!extra.hasOdds;
 
+  // 让球方向粗估：负盘主队让球
+  let handicapSupport = 0;
+  if (asian.lineNum != null) {
+    if (asian.lineNum < 0) handicapSupport = 1;
+    else if (asian.lineNum > 0) handicapSupport = -1;
+  } else {
+    handicapSupport = pH > 0.48 ? 1 : pA > 0.42 ? -1 : 0;
+  }
+
   return {
     id: String(id),
     league: league || "综合",
@@ -104,7 +161,10 @@ function mapWithOdds(home, away, league, kickoff, id, odds, extra = {}) {
     form: {
       home: strengthHome - 4,
       away: strengthAway - 4,
-      detail: { home: hasOdds ? "赔率推算" : "赛程数据", away: hasOdds ? "赔率推算" : "赛程数据" },
+      detail: {
+        home: hasOdds ? "赔率+盘口推算" : "赛程数据",
+        away: hasOdds ? "赔率+盘口推算" : "赛程数据",
+      },
     },
     xg: {
       home: +(1.05 + pH * 1.3).toFixed(2),
@@ -113,8 +173,16 @@ function mapWithOdds(home, away, league, kickoff, id, odds, extra = {}) {
     defense: { home: strengthHome - 2, away: strengthAway - 2 },
     odds: od,
     market: {
-      asian_handicap: { line: "-", home: "-", away: "-" },
-      goal: { line: "2.5", over: "大", under: "小" },
+      asian_handicap: {
+        line: asian.line,
+        home: asian.home != null ? asian.home : "-",
+        away: asian.away != null ? asian.away : "-",
+      },
+      goal: {
+        line: totals.line,
+        over: totals.over != null ? totals.over : "-",
+        under: totals.under != null ? totals.under : "-",
+      },
     },
     market_analysis: {
       trend: hasOdds ? "真实赔率" : "默认盘口",
@@ -125,33 +193,29 @@ function mapWithOdds(home, away, league, kickoff, id, odds, extra = {}) {
     ai_market: {
       odds_change: 0,
       heat_risk: heatRisk,
-      handicap_support: pH > 0.48 ? 1 : pA > 0.42 ? -1 : 0,
-      analysis: `${home} vs ${away} · 主${od.home} 平${od.draw} 客${od.away}`,
+      handicap_support: handicapSupport,
+      analysis: `${home} vs ${away}`,
     },
-    injury: {
-      home: { players: [], totalImpact: 0 },
-      away: { players: [], totalImpact: 0 },
-    },
+    injury: { home: { players: [], totalImpact: 0 }, away: { players: [], totalImpact: 0 } },
     motivation: { level: "联赛", impact: 2 },
     schedule: { recent_match: "-", fatigue: 0 },
     rotation: { risk: "未知", impact: 0 },
     style_match: {
       home_style: "-",
       away_style: "-",
-      matchup: hasOdds ? "基于真实赔率隐含概率" : "综合赛程",
+      matchup: hasOdds ? "赔率+让球+大小多维" : "综合赛程",
       impact: 0,
     },
     market_logic: {
       popular_side: pH > pA ? "主胜" : "客胜",
       cold_side: "平局",
-      bookmaker_signal: hasOdds ? "多家书商平均赔率" : "无",
+      bookmaker_signal: hasOdds ? "多家书商平均" : "无",
       impact: heatRisk,
     },
     prediction: {
       home_win: Math.round(pH * 100) + "%",
       draw: Math.round((1 - pH - pA) * 100) + "%",
       away_win: Math.round(pA * 100) + "%",
-      score: pH > 0.48 ? "2-1" : pA > 0.42 ? "1-2" : "1-1",
     },
     risk: heat === "高" ? "较高" : "中等",
     source: extra.source || "odds-api",
@@ -168,20 +232,19 @@ async function fetchOddsApi(key, leagueFilter) {
     );
     if (hit.length) targets = hit;
   }
-  // 免费额度：默认 5 个联赛
   targets = targets.slice(0, leagueFilter ? 3 : 5);
 
   for (const sp of targets) {
     try {
       const url =
         `https://api.the-odds-api.com/v4/sports/${sp.key}/odds` +
-        `?apiKey=${encodeURIComponent(key)}&regions=eu&markets=h2h&oddsFormat=decimal`;
+        `?apiKey=${encodeURIComponent(key)}&regions=eu&markets=h2h,spreads,totals&oddsFormat=decimal`;
       const res = await fetch(url);
       const remaining = res.headers.get("x-requests-remaining");
       const used = res.headers.get("x-requests-used");
       if (!res.ok) {
         const t = await res.text().catch(() => "");
-        debug.push({ sport: sp.name, err: `${res.status} ${t.slice(0, 100)}` });
+        debug.push({ sport: sp.name, err: `${res.status} ${t.slice(0, 80)}` });
         continue;
       }
       const events = await res.json();
@@ -192,12 +255,10 @@ async function fetchOddsApi(key, leagueFilter) {
         used,
       });
       for (const ev of events || []) {
-        const home = ev.home_team;
-        const away = ev.away_team;
-        if (!home || !away) continue;
-        const odds = avgH2H(ev.bookmakers, home, away);
+        if (!ev.home_team || !ev.away_team) continue;
+        const markets = extractMarkets(ev.bookmakers, ev.home_team, ev.away_team);
         all.push(
-          mapWithOdds(home, away, sp.name, ev.commence_time, ev.id, odds, {
+          mapWithOdds(ev.home_team, ev.away_team, sp.name, ev.commence_time, ev.id, markets, {
             hasOdds: true,
             source: "odds-api",
           })
@@ -227,7 +288,6 @@ async function fetchSportsDb(leagueFilter) {
       for (const e of events) {
         const id = String(e.idEvent || "");
         if (!id || seen.has(id)) continue;
-        // 跳过已完赛
         if (e.intHomeScore != null && e.intAwayScore != null && e.strStatus === "Match Finished") {
           continue;
         }
@@ -261,7 +321,6 @@ export default async function handler(req, res) {
   const hasKey = oddsKey.length > 8;
 
   try {
-    // 1) 有 Key → 真实赔率
     if (hasKey) {
       const { matches, debug } = await fetchOddsApi(oddsKey, leagueFilter);
       if (matches.length > 0) {
@@ -271,13 +330,12 @@ export default async function handler(req, res) {
           count: matches.length,
           source: "odds-api",
           hasKey: true,
-          note: "真实赔率来自 The Odds API（多家书商平均）",
+          note: "真实赔率：胜平负 + 让球 + 大小球（The Odds API）",
           updatedAt: new Date().toISOString(),
           debug,
           matches,
         });
       }
-      // Key 有效但当前无场次 → 继续回退赛程
       const fb = await fetchSportsDb(leagueFilter);
       fb.matches.sort((a, b) => String(a.kickoff).localeCompare(String(b.kickoff)));
       return res.status(200).json({
@@ -285,15 +343,13 @@ export default async function handler(req, res) {
         count: fb.matches.length,
         source: fb.matches.length ? "thesportsdb" : "empty",
         hasKey: true,
-        note:
-          "赔率 Key 已配置，但当前联赛暂无开售场次（可能休赛期），已回退综合赛程",
+        note: "Key 已配置但暂无开售场次，已回退综合赛程",
         updatedAt: new Date().toISOString(),
         debug: [...debug, ...fb.debug],
         matches: fb.matches,
       });
     }
 
-    // 2) 无 Key → 仅赛程
     const { matches, debug } = await fetchSportsDb(leagueFilter);
     matches.sort((a, b) => String(a.kickoff).localeCompare(String(b.kickoff)));
     return res.status(200).json({
@@ -301,7 +357,7 @@ export default async function handler(req, res) {
       count: matches.length,
       source: "thesportsdb",
       hasKey: false,
-      note: "未检测到 THE_ODDS_API_KEY（请在 Vercel 配置后 Redeploy）。当前仅综合赛程，赔率为默认值。",
+      note: "未检测到 THE_ODDS_API_KEY，当前仅综合赛程",
       updatedAt: new Date().toISOString(),
       debug,
       matches,
