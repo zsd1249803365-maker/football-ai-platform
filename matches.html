@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>比赛列表 - Football AI</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=5.0.1">
   <style>
     .filters { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
     .filter-btn {
@@ -19,8 +20,8 @@
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v4.4</span></h1>
-    <p>比赛列表 · 按开赛时间排序</p>
+    <h1>⚽ Football AI <span class="version">v5.0</span></h1>
+    <p>比赛列表 · 按开赛时间排序 · 真实赔率</p>
   </div>
 
   <nav class="nav">
@@ -54,9 +55,9 @@
     <div id="list" class="loading">正在加载比赛...</div>
   </div>
 
-  <div class="footer">Football AI v4.4 · 仅供参考</div>
+  <div class="footer">Football AI v5.0 · 仅供参考</div>
 
-  <script src="js/score.js"></script>
+  <script src="js/score.js?v=5.0.1"></script>
   <script>
     let allResults = [];
     let currentLeague = "";
@@ -123,7 +124,7 @@
         .then(data => {
           allResults = analyzeAllByDate(data);
           const srcMap = {
-            "odds-api": "🟢 真实赔率",
+            "odds-api": "🟢 真实赔率（The Odds API）",
             thesportsdb: "🟡 综合赛程",
             local: "🟡 本地",
             cache: "🟡 缓存",

@@ -3,13 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Football AI - 综合赛事分析</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=5.0.1">
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v4.4</span></h1>
-    <p>综合足球赛程 · 多维评分分析</p>
+    <h1>⚽ Football AI <span class="version">v5.0</span></h1>
+    <p>综合足球赛程 · 真实赔率 · 多维评分分析</p>
   </div>
 
   <nav class="nav">
@@ -30,6 +33,7 @@
     <div class="card">
       <div class="card-title">📡 数据状态</div>
       <div id="dataStatus" style="font-size:0.9rem;color:var(--text-muted)">检测中...</div>
+      <div id="dataNote" style="font-size:0.8rem;color:var(--text-muted);margin-top:8px"></div>
     </div>
 
     <div class="card">
@@ -38,14 +42,14 @@
     </div>
 
     <div class="card">
-      <div class="card-title">🗓 最近比赛</div>
+      <div class="card-title">🗓 最近比赛（真实赔率优先）</div>
       <div id="topGames" class="loading">正在分析...</div>
     </div>
   </div>
 
-  <div class="footer">Football AI v4.4 · 仅供参考</div>
+  <div class="footer">Football AI v5.0 · 仅供参考</div>
 
-  <script src="js/score.js"></script>
+  <script src="js/score.js?v=5.0.1"></script>
   <script>
     loadMatches()
       .then(data => {
@@ -53,13 +57,16 @@
         const results = analyzeAll(data);
         const srcMap = {
           "odds-api": "🟢 真实赔率（The Odds API）",
-          thesportsdb: "🟡 综合赛程",
+          thesportsdb: "🟡 综合赛程（TheSportsDB）",
           local: "🟡 本地数据",
           cache: "🟡 缓存",
         };
         const src = srcMap[window.__DATA_SOURCE__] || "🟢 在线数据";
         document.getElementById("dataStatus").textContent =
           src + ` · ${results.length} 场`;
+        if (window.__DATA_NOTE__) {
+          document.getElementById("dataNote").textContent = window.__DATA_NOTE__;
+        }
 
         const homeCount = results.filter(r => r.pickSide === "home").length;
         const drawCount = results.filter(r => r.pickSide === "draw").length;
@@ -74,7 +81,7 @@
           </div>`;
 
         let html = "";
-        byDate.slice(0, 8).forEach((g, i) => {
+        byDate.slice(0, 10).forEach((g, i) => {
           const oddsText = g.odds ? `主 ${g.odds.home} / 平 ${g.odds.draw} / 客 ${g.odds.away}` : "";
           html += `
             <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
