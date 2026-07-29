@@ -4,151 +4,329 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <title>单场分析 - Football AI</title>
-  <link rel="stylesheet" href="css/style.css?v=5.3">
-  <style>
-    .report-block { white-space: pre-wrap; line-height: 1.8; font-size: 0.92rem; }
-    .odds-box {
-      margin-top: 4px;
-      padding: 12px 14px;
-      background: rgba(10,15,13,0.55);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      line-height: 1.6;
-      font-variant-numeric: tabular-nums;
-    }
-    .odds-row { margin-bottom: 4px; }
-    .odds-prob { color: var(--primary); font-weight: 600; }
-  </style>
+  <title>比赛详情 - Football AI</title>
+  <link rel="stylesheet" href="css/style.css?v=6.0">
+  <style>.report-block{white-space:pre-wrap;line-height:1.8;font-size:0.9rem}</style>
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v5.3</span></h1>
-    <p>单场多维分析 · 泊松比分 · 盘口解读</p>
+    <h1>⚽ 比赛详情 <span class="version">v6.0</span></h1>
+    <p>赔率 · 积分 · 战绩 · 伤停 · AI分析</p>
   </div>
 
   <nav class="nav">
     <a href="index.html">🏠 首页</a>
-    <a href="matches.html">⚽ 比赛</a>
-    <a href="ai-ranking.html">📊 排行榜</a>
+    <a href="matches.html" class="active">⚽ 比赛</a>
     <a href="ai-bet.html">🎫 方案</a>
+    <a href="results.html">📋 赛果</a>
   </nav>
 
   <div class="container" id="content">
-    <div class="loading">正在生成分析报告...</div>
+    <div class="loading">加载详情...</div>
   </div>
 
-  <div class="footer">Football AI v5.3 · 仅供参考</div>
+  <div class="footer">Football AI v6.0 · 仅供参考</div>
 
-  <script src="js/score.js?v=5.3"></script>
+  <script src="js/score.js?v=6.0"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const gameId = params.get("game");
 
+    /** 用实力分生成示意积分榜（无官方积分 API 时的结构占位） */
+    function mockStandings(home, away, sh, sa, league) {
+      const teams = [
+        { name: home, s: sh },
+        { name: away, s: sa },
+        { name: "对阵参考A", s: Math.max(50, sh - 8) },
+        { name: "对阵参考B", s: Math.max(48, sa - 6) },
+        { name: "对阵参考C", s: Math.max(45, (sh + sa) / 2 - 10) },
+        { name: "对阵参考D", s: Math.max(42, Math.min(sh, sa) - 12) },
+        { name: "对阵参考E", s: 55 },
+        { name: "对阵参考F", s: 50 },
+      ];
+      teams.sort((a, b) => b.s - a.s);
+      return teams.map((t, i) => {
+        const played = 20 + (i % 5);
+        const w = Math.round(played * (t.s / 130));
+        const d = Math.round((played - w) * 0.35);
+        const l = played - w - d;
+        const gf = w * 2 + d;
+        const ga = l * 2 + d;
+        const pts = w * 3 + d;
+        let zone = "mid", zoneLabel = "中游";
+        if (i < 2) { zone = "promo"; zoneLabel = "争冠/升级区"; }
+        else if (i >= teams.length - 2) { zone = "releg"; zoneLabel = "保级/降级区"; }
+        return { rank: i + 1, name: t.name, played, w, d, l, gf, ga, pts, zone, zoneLabel,
+          isFocus: t.name === home || t.name === away };
+      });
+    }
+
+    function mockForm(seed, n) {
+      // 伪随机近期战绩
+      const out = [];
+      let x = Math.abs(seed) % 97 || 7;
+      for (let i = 0; i < n; i++) {
+        x = (x * 17 + 23) % 100;
+        out.push(x > 55 ? "W" : x > 30 ? "D" : "L");
+      }
+      return out;
+    }
+
+    function mockH2H(home, away, league) {
+      const rows = [];
+      const years = [2025, 2024, 2024, 2023, 2023];
+      for (let i = 0; i < 5; i++) {
+        const hs = (i * 3 + home.length) % 4;
+        const as = (i * 2 + away.length) % 3;
+        let result = "draw";
+        if (hs > as) result = "home";
+        else if (as > hs) result = "away";
+        rows.push({
+          date: `${years[i]}-${String((i % 9) + 1).padStart(2, "0")}-15`,
+          competition: league || "联赛",
+          home, away, hs, as, result,
+        });
+      }
+      return rows;
+    }
+
+    function mockInjuries(team, isHome) {
+      // 结构占位：无伤停 API 时标明「示意」
+      if ((team.length + (isHome ? 1 : 0)) % 3 === 0) {
+        return [{ name: "数据待接入", pos: "-", posClass: "pos-mf", reason: "需伤停数据源", since: "-" }];
+      }
+      return [];
+    }
+
+    function renderStandTable(rows, title) {
+      let html = `<div style="font-size:0.82rem;margin-bottom:8px;color:var(--text-muted)">${title}<span style="color:var(--text-dim);font-size:0.72rem"> · 示意结构，待接入官方积分 API</span></div>`;
+      html += `<table class="stand-table"><thead><tr>
+        <th>#</th><th class="team">球队</th><th>赛</th><th>胜</th><th>平</th><th>负</th><th>进</th><th>失</th><th>积分</th>
+      </tr></thead><tbody>`;
+      rows.forEach(r => {
+        const cls = r.zone === "promo" ? "stand-row-promo" : r.zone === "releg" ? "stand-row-releg" : "";
+        const bold = r.isFocus ? "font-weight:800;color:var(--primary)" : "";
+        html += `<tr class="${cls}">
+          <td>${r.rank}</td>
+          <td class="team" style="${bold}">${r.name}</td>
+          <td>${r.played}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
+          <td>${r.gf}</td><td>${r.ga}</td><td><strong>${r.pts}</strong></td>
+        </tr>`;
+      });
+      html += `</tbody></table>
+        <div class="legend">
+          <span><i style="background:#10b981"></i> 争冠/升级区</span>
+          <span><i style="background:#64748b"></i> 中游</span>
+          <span><i style="background:#ef4444"></i> 保级/降级区</span>
+        </div>`;
+      return html;
+    }
+
+    function formDots(arr) {
+      return `<div class="form-row">` +
+        arr.map(x => `<span class="form-dot form-${x.toLowerCase()}">${x}</span>`).join("") +
+        `</div>`;
+    }
+
     function render(match) {
       const a = analyzeMatch(match);
       const m = match;
-      const srcLabel = a.source === "odds-api" ? "🟢 联网真实赔率" : "🟡 估算/赛程";
+      const od = a.odds || {};
+      const ah = a.asian || {};
+      const tt = a.totals || {};
+      const sh = m.strength?.home || 75;
+      const sa = m.strength?.away || 75;
+      const stand = mockStandings(a.home, a.away, sh, sa, a.league);
+      const formH = mockForm(sh * 10 + a.home.length, 20);
+      const formA = mockForm(sa * 10 + a.away.length, 20);
+      const h2h = mockH2H(a.home, a.away, a.league);
+      const injH = mockInjuries(a.home, true);
+      const injA = mockInjuries(a.away, false);
 
       document.getElementById("content").innerHTML = `
         <div class="card">
           <div class="match-name">${a.home} vs ${a.away}</div>
-          <div class="match-league">${a.league}${a.kickoff ? " · " + formatKickoff(a.kickoff) : ""} · ${srcLabel}</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <div class="match-league">${a.league} · ${formatKickoff(a.kickoff) || "时间待定"}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
             <span class="badge ${pickBadgeClass(a.pickSide)}">${a.pick}</span>
             <span class="badge ${riskBadgeClass(a.riskLevel)}">风险${a.risk}</span>
             <span class="stars">${a.starStr}</span>
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-title">盘口速览</div>
-          ${oddsSnippet(a)}
+        <div class="sec-tabs" id="tabs">
+          <button type="button" class="sec-tab active" data-sec="odds">赔率区</button>
+          <button type="button" class="sec-tab" data-sec="intel">情报区</button>
+          <button type="button" class="sec-tab" data-sec="table">积分区</button>
+          <button type="button" class="sec-tab" data-sec="form">战绩区</button>
+          <button type="button" class="sec-tab" data-sec="injury">伤停区</button>
+          <button type="button" class="sec-tab" data-sec="ai">AI分析</button>
         </div>
 
-        <div class="card">
-          <div class="card-title">AI 多维分析报告</div>
-          <div class="report report-block">${a.report}</div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">最终建议</div>
-          <div class="report ${a.riskLevel === "low" ? "success" : a.riskLevel === "high" ? "danger" : ""}">
-            推荐：<strong>${a.pick}</strong><br>
-            风险：${a.risk}<br>
-            综合评分：主 ${a.homeScore} / 客 ${a.awayScore}<br>
-            预测比分：<strong>${a.predScore}</strong>${a.predScoreProb ? `（约 ${a.predScoreProb}%）` : ""}<br>
-            ${a.altScoresText && a.altScoresText.length ? "备选：" + a.altScoresText.join("、") : ""}
+        <div class="sec-panel active" id="sec-odds">
+          <div class="card">
+            <div class="card-title">赔率区 · 书商均值</div>
+            <table class="odds-table">
+              <thead>
+                <tr><th class="book">公司</th><th>主胜</th><th>平局</th><th>客胜</th><th>让球</th><th>大球</th><th>小球</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="book">综合均值</td>
+                  <td>${od.home ?? "-"}</td><td>${od.draw ?? "-"}</td><td>${od.away ?? "-"}</td>
+                  <td>${ah.line && ah.line !== "-" ? ah.line : "-"}</td>
+                  <td>${tt.over ?? "-"}</td><td>${tt.under ?? "-"}</td>
+                </tr>
+                <tr>
+                  <td class="book">让球水位</td>
+                  <td colspan="3" style="color:var(--text-dim)">主 ${ah.home ?? "-"} / 客 ${ah.away ?? "-"}</td>
+                  <td colspan="3" style="color:var(--text-dim)">大小线 ${tt.line || "2.5"}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-top:10px">
+              当前为 The Odds API 多家书商平均。单家澳彩/皇冠明细需额外授权后接入。
+            </p>
+          </div>
+          <div class="card">
+            <div class="card-title">预测比分</div>
+            <div style="font-size:0.9rem">
+              主推 <strong style="font-size:1.2rem;color:var(--primary)">${a.predScore}</strong>
+              （约 ${a.predScoreProb ?? "-"}%）
+              <div style="margin-top:8px;color:var(--text-muted);font-size:0.82rem">备选 ${(a.altScoresText||[]).join(" · ") || "-"}</div>
+              <div style="margin-top:8px;color:var(--primary)">主${a.homeProb}% · 平${a.drawProb}% · 客${a.awayProb}%</div>
+            </div>
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-title">胜平负概率</div>
-          <div class="info-grid">
-            <div class="info-item">
-              <div class="label">主胜</div>
-              <div class="value">${a.homeProb}%</div>
-              <div class="prob-bar"><div class="prob-bar-fill prob-home" style="width:${a.homeProb}%"></div></div>
+        <div class="sec-panel" id="sec-intel">
+          <div class="card">
+            <div class="card-title">情报区</div>
+            <div class="report">
+              暂无实时新闻爬虫。可接入的方向：赛前发布会、主力伤停确认、轮换传闻、天气、裁判。
+              当前仅展示盘口热度：${m.market_analysis?.heat || "-"} · ${m.market_analysis?.risk_note || ""}
             </div>
-            <div class="info-item">
-              <div class="label">平局</div>
-              <div class="value">${a.drawProb}%</div>
-              <div class="prob-bar"><div class="prob-bar-fill prob-draw" style="width:${a.drawProb}%"></div></div>
-            </div>
-            <div class="info-item">
-              <div class="label">客胜</div>
-              <div class="value">${a.awayProb}%</div>
-              <div class="prob-bar"><div class="prob-bar-fill prob-away" style="width:${a.awayProb}%"></div></div>
-            </div>
-            <div class="info-item">
-              <div class="label">预测比分</div>
-              <div class="value">${a.predScore}</div>
+            <div style="margin-top:12px;font-size:0.85rem;color:var(--text-muted)">
+              <div>· 联赛：${a.league}</div>
+              <div>· 开赛：${formatKickoff(a.kickoff) || "待定"}</div>
+              <div>· 数据源：${a.source === "odds-api" ? "联网真实赔率" : "赛程估算"}</div>
             </div>
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-title">模型指标</div>
-          <div class="info-grid">
-            <div class="info-item"><div class="label">${a.home} 实力</div><div class="value">${m.strength?.home ?? "-"}</div></div>
-            <div class="info-item"><div class="label">${a.away} 实力</div><div class="value">${m.strength?.away ?? "-"}</div></div>
-            <div class="info-item"><div class="label">${a.home} xG</div><div class="value">${m.xg?.home ?? "-"}</div></div>
-            <div class="info-item"><div class="label">${a.away} xG</div><div class="value">${m.xg?.away ?? "-"}</div></div>
+        <div class="sec-panel" id="sec-table">
+          <div class="card">
+            <div class="card-title">积分区 · 总场</div>
+            ${renderStandTable(stand, a.league + " 积分榜（总）")}
+          </div>
+          <div class="card">
+            <div class="card-title">说明</div>
+            <div style="font-size:0.82rem;color:var(--text-muted);line-height:1.7">
+              完整「主场 / 客场」分榜、真实场次与升降级规则需联赛官方或 API-Football 等数据源。
+              上表为按实力评分生成的<strong>示意结构</strong>，用于展示分区颜色与字段布局。
+            </div>
+          </div>
+        </div>
+
+        <div class="sec-panel" id="sec-form">
+          <div class="card">
+            <div class="card-title">战绩区 · 近期 20 场</div>
+            <div style="font-size:0.85rem;margin-bottom:4px">${a.home}</div>
+            ${formDots(formH)}
+            <div style="font-size:0.85rem;margin:12px 0 4px">${a.away}</div>
+            ${formDots(formA)}
+            <div class="legend" style="margin-top:8px">
+              <span><i style="background:var(--win)"></i> 胜(红)</span>
+              <span><i style="background:var(--draw)"></i> 平(蓝)</span>
+              <span><i style="background:var(--lose)"></i> 负(灰)</span>
+            </div>
+            <p style="font-size:0.72rem;color:var(--text-dim);margin-top:8px">示意战绩条，接入真实赛果后替换</p>
+          </div>
+          <div class="card">
+            <div class="card-title">历史交锋</div>
+            ${h2h.map(h => {
+              const scClass = h.result === "draw" ? "draw" : "win";
+              return `<div class="h2h-item">
+                <div class="h2h-score ${scClass}">${h.hs}-${h.as}</div>
+                <div style="flex:1">
+                  <div>${h.home} vs ${h.away}</div>
+                  <div class="h2h-meta">${h.competition} · ${h.date}</div>
+                </div>
+              </div>`;
+            }).join("")}
+            <p style="font-size:0.72rem;color:var(--text-dim);margin-top:8px">示意交锋，胜方比分红色、平局蓝色</p>
+          </div>
+        </div>
+
+        <div class="sec-panel" id="sec-injury">
+          <div class="card">
+            <div class="card-title">伤停区 · ${a.home}</div>
+            ${injH.length ? injH.map(p => `
+              <div class="injury-item">
+                <span class="pos-tag ${p.posClass}">${p.pos}</span>
+                <div>
+                  <div>${p.name}</div>
+                  <div style="font-size:0.75rem;color:var(--text-dim)">${p.reason} · 自 ${p.since}</div>
+                </div>
+              </div>`).join("") : `<div class="report">暂无伤停名单（需伤停数据源）</div>`}
+          </div>
+          <div class="card">
+            <div class="card-title">伤停区 · ${a.away}</div>
+            ${injA.length ? injA.map(p => `
+              <div class="injury-item">
+                <span class="pos-tag ${p.posClass}">${p.pos}</span>
+                <div>
+                  <div>${p.name}</div>
+                  <div style="font-size:0.75rem;color:var(--text-dim)">${p.reason} · 自 ${p.since}</div>
+                </div>
+              </div>`).join("") : `<div class="report">暂无伤停名单（需伤停数据源）</div>`}
+          </div>
+        </div>
+
+        <div class="sec-panel" id="sec-ai">
+          <div class="card">
+            <div class="card-title">AI 多维分析</div>
+            <div class="report report-block">${a.report}</div>
+          </div>
+          <div class="card">
+            <div class="card-title">最终建议</div>
+            <div class="report ${a.riskLevel==="low"?"success":a.riskLevel==="high"?"danger":""}">
+              推荐：<strong>${a.pick}</strong> · 风险 ${a.risk}<br>
+              评分 主 ${a.homeScore} / 客 ${a.awayScore}<br>
+              比分 ${a.predScore}${a.predScoreProb?`（${a.predScoreProb}%）`:""}
+            </div>
           </div>
         </div>
 
         <a class="btn btn-dark" href="matches.html">← 返回比赛列表</a>
       `;
+
+      document.querySelectorAll(".sec-tab").forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll(".sec-tab").forEach(b => b.classList.remove("active"));
+          document.querySelectorAll(".sec-panel").forEach(p => p.classList.remove("active"));
+          btn.classList.add("active");
+          document.getElementById("sec-" + btn.dataset.sec).classList.add("active");
+        };
+      });
     }
 
-    loadMatches()
-      .then(data => {
-        let match = findMatch(data || [], gameId);
-        if (!match) {
-          try {
-            const cached = JSON.parse(sessionStorage.getItem("fa_matches") || "[]");
-            match = findMatch(cached, gameId);
-          } catch (_) {}
-        }
-        if (!match) {
-          document.getElementById("content").innerHTML = `
-            <div class="card">
-              <div class="report danger">未找到该场比赛</div>
-              <p style="color:var(--text-muted);font-size:0.9rem;margin-top:12px">
-                可能是数据已刷新。请从比赛列表重新进入。
-              </p>
-              <a class="btn btn-primary" href="matches.html">返回比赛列表</a>
-            </div>`;
-          return;
-        }
-        render(match);
-      })
-      .catch(err => {
-        document.getElementById("content").innerHTML =
-          `<div class="card"><div class="report danger">${err.message}</div></div>`;
-      });
+    loadMatches().then(data => {
+      let match = findMatch(data || [], gameId);
+      if (!match) {
+        try { match = findMatch(JSON.parse(sessionStorage.getItem("fa_matches") || "[]"), gameId); } catch(_){}
+      }
+      if (!match) {
+        document.getElementById("content").innerHTML = `
+          <div class="card"><div class="report danger">未找到该场比赛</div>
+          <a class="btn btn-primary" href="matches.html">返回列表</a></div>`;
+        return;
+      }
+      render(match);
+    }).catch(err => {
+      document.getElementById("content").innerHTML =
+        `<div class="card"><div class="report danger">${err.message}</div></div>`;
+    });
   </script>
 </body>
 </html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>赛果对比 - Football AI</title>
+  <link rel="stylesheet" href="css/style.css?v=6.0">
+</head>
+<body>
+  <div class="header">
+    <h1>📋 赛果 <span class="version">v6.0</span></h1>
+    <p>预测 vs 实际 · 用于复盘改进</p>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html">🏠 首页</a>
+    <a href="matches.html">⚽ 比赛</a>
+    <a href="ai-bet.html">🎫 方案</a>
+    <a href="results.html" class="active">📋 赛果</a>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-title">说明</div>
+      <div style="font-size:0.88rem;color:var(--text-muted);line-height:1.7">
+        赛果对比需要：①赛后真实比分数据源 ②把赛前预测写入本地/数据库。
+        当前先展示「待赛预测快照」；赛果接入后会在此显示命中率与偏差报告。
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">待赛预测快照</div>
+      <div id="list"><div class="loading">加载中...</div></div>
+    </div>
+  </div>
+
+  <div class="footer">Football AI v6.0</div>
+
+  <script src="js/score.js?v=6.0"></script>
+  <script>
+    loadMatches().then(data => {
+      const list = analyzeAllByDate(data || []);
+      if (!list.length) {
+        document.getElementById("list").innerHTML = `<div class="report">暂无数据</div>`;
+        return;
+      }
+      // 存快照供日后对比
+      try {
+        const snap = list.map(g => ({
+          id: g.id, home: g.home, away: g.away, league: g.league,
+          kickoff: g.kickoff, pick: g.pick, predScore: g.predScore,
+          homeProb: g.homeProb, savedAt: new Date().toISOString(),
+        }));
+        localStorage.setItem("fa_pred_snap", JSON.stringify(snap));
+      } catch(_){}
+
+      let html = "";
+      list.slice(0, 30).forEach(g => {
+        html += `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
+          <div class="match-name" style="font-size:0.95rem">${g.home} vs ${g.away}</div>
+          <div class="match-league">${g.league} · ${formatKickoff(g.kickoff) || ""}</div>
+          <div style="font-size:0.82rem;margin-top:6px;color:var(--text-muted)">
+            预测 <strong style="color:var(--text)">${g.pick}</strong> · 比分 ${g.predScore}
+            · 主${g.homeProb}% 平${g.drawProb}% 客${g.awayProb}%
+          </div>
+          <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px">实际赛果：待赛后写入</div>
+        </div>`;
+      });
+      html += `<div class="list-end">— 快照已保存到本机，赛果 API 接入后自动对比 —</div>`;
+      document.getElementById("list").innerHTML = html;
+    }).catch(err => {
+      document.getElementById("list").innerHTML = `<div class="report danger">${err.message}</div>`;
+    });
+  </script>
+</body>
+</html>
