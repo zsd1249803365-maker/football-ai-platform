@@ -5,13 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>比赛详情 - Football AI</title>
-  <link rel="stylesheet" href="css/style.css?v=6.1">
-  <style>.report-block{white-space:pre-wrap;line-height:1.8;font-size:0.9rem}</style>
+  <link rel="stylesheet" href="css/style.css?v=6.2">
+  <style>
+    .report-block{white-space:pre-wrap;line-height:1.8;font-size:0.9rem}
+    .form-match {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem;
+    }
+    .form-badge {
+      min-width: 42px; text-align: center; font-weight: 800; font-size: 0.9rem;
+      font-variant-numeric: tabular-nums; padding: 4px 6px; border-radius: 6px;
+    }
+    .form-badge.win { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .form-badge.draw { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .form-badge.lose { background: rgba(100,116,139,0.2); color: #94a3b8; }
+  </style>
 </head>
 <body>
   <div class="header">
-    <h1>⚽ 比赛详情 <span class="version">v6.1</span></h1>
-    <p>真实赔率 · 真实积分/战绩（TheSportsDB）</p>
+    <h1>⚽ 比赛详情 <span class="version">v6.2</span></h1>
+    <p>赔率 · 积分 · 战绩（红胜蓝平）</p>
   </div>
 
   <nav class="nav">
@@ -25,35 +38,39 @@
     <div class="loading">加载详情...</div>
   </div>
 
-  <div class="footer">Football AI v6.1</div>
+  <div class="footer">Football AI v6.2</div>
 
-  <script src="js/score.js?v=6.1"></script>
+  <script src="js/score.js?v=6.2"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const gameId = params.get("game");
 
-    async function loadContext(league, homeEn, awayEn, homeZh, awayZh) {
+    async function loadContext(league, homeEn, awayEn) {
       try {
         const q = new URLSearchParams({
           league: league || "",
-          home: homeEn || homeZh || "",
-          away: awayEn || awayZh || "",
+          home: homeEn || "",
+          away: awayEn || "",
           t: Date.now(),
         });
         const res = await fetch("/api/context?" + q);
-        if (!res.ok) return null;
+        if (!res.ok) return { ok: false, message: "HTTP " + res.status };
         return await res.json();
-      } catch {
-        return null;
+      } catch (e) {
+        return { ok: false, message: String(e.message || e) };
       }
     }
 
     function renderStandTable(rows, title, note) {
       if (!rows || !rows.length) {
-        return `<div class="report">暂无积分数据${note ? "（" + note + "）" : ""}</div>`;
+        return `<div class="report">暂无积分数据<br><span style="font-size:0.8rem">${note || ""}</span></div>`;
       }
+      const allZero = rows.every(r => !r.played);
       let html = `<div style="font-size:0.82rem;margin-bottom:8px;color:var(--text-muted)">${title}
-        <span style="color:var(--text-dim);font-size:0.72rem"> · ${note || "TheSportsDB"}</span></div>`;
+        <span style="color:var(--text-dim);font-size:0.72rem"> · ${note || ""}</span></div>`;
+      if (allZero) {
+        html += `<div class="report" style="margin-bottom:10px">本赛季场次多为 0（休赛/新赛季刚开），以下为当前积分榜结构。</div>`;
+      }
       html += `<table class="stand-table"><thead><tr>
         <th>#</th><th class="team">球队</th><th>赛</th><th>胜</th><th>平</th><th>负</th><th>进</th><th>失</th><th>积分</th>
       </tr></thead><tbody>`;
@@ -61,41 +78,41 @@
         const cls = r.zone === "promo" ? "stand-row-promo" : r.zone === "releg" ? "stand-row-releg" : "";
         const bold = r.isFocus ? "font-weight:800;color:var(--primary)" : "";
         html += `<tr class="${cls}">
-          <td>${r.rank}</td>
-          <td class="team" style="${bold}">${r.name}</td>
+          <td>${r.rank}</td><td class="team" style="${bold}">${r.name}</td>
           <td>${r.played}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
-          <td>${r.gf}</td><td>${r.ga}</td><td><strong>${r.pts}</strong></td>
-        </tr>`;
+          <td>${r.gf}</td><td>${r.ga}</td><td><strong>${r.pts}</strong></td></tr>`;
       });
       html += `</tbody></table>
         <div class="legend">
-          <span><i style="background:#10b981"></i> 争冠/欧战区</span>
+          <span><i style="background:#10b981"></i> 争冠/欧战</span>
           <span><i style="background:#64748b"></i> 中游</span>
-          <span><i style="background:#ef4444"></i> 保级/降级区</span>
+          <span><i style="background:#ef4444"></i> 保级/降级</span>
         </div>`;
       return html;
     }
 
-    function formDots(form) {
-      if (!form || !form.length) return `<div class="report">暂无近期赛果</div>`;
-      const dots = form.map(f => {
-        const r = f.result || f;
-        const letter = typeof r === "string" && r.length === 1 ? r : (f.result || "D");
-        return `<span class="form-dot form-${letter.toLowerCase()}" title="${f.score || ""} ${f.date || ""}">${letter}</span>`;
-      }).join("");
-      return `<div class="form-row">${dots}</div>`;
-    }
-
-    function formList(form) {
-      if (!form || !form.length) return "";
-      return form.slice(0, 8).map(f => `
-        <div class="h2h-item">
-          <div class="h2h-score ${f.result === "W" ? "win" : f.result === "D" ? "draw" : ""}">${f.score || f.result}</div>
+    /** 战绩：写清对阵，胜红 平蓝 负灰，不用 WDL */
+    function formList(form, focusName) {
+      if (!form || !form.length) {
+        return `<div class="report">暂无近期赛果（该联赛往绩未返回或队名未匹配）</div>`;
+      }
+      return form.map(f => {
+        const cls = f.outcome === "win" ? "win" : f.outcome === "draw" ? "draw" : "lose";
+        const label = f.outcome === "win" ? "胜" : f.outcome === "draw" ? "平" : "负";
+        const vs = f.isHome
+          ? `${focusName || "本队"} ${f.score} ${f.opponent}`
+          : `${f.opponent} ${f.score} ${focusName || "本队"}`;
+        const line = f.isHome
+          ? `主场 vs ${f.opponent}`
+          : `客场 vs ${f.opponent}`;
+        return `<div class="form-match">
+          <div class="form-badge ${cls}">${f.score}</div>
           <div style="flex:1">
-            <div style="font-size:0.82rem">${f.home} vs ${f.away}</div>
+            <div>${line} <span style="color:var(--text-dim)">（${label}）</span></div>
             <div class="h2h-meta">${f.competition || ""} · ${f.date || ""}</div>
           </div>
-        </div>`).join("");
+        </div>`;
+      }).join("");
     }
 
     function render(match, ctx) {
@@ -110,7 +127,7 @@
       const h2h = ctx?.h2h || [];
       const ctxNote = ctx?.ok
         ? (ctx.note || "TheSportsDB") + (ctx.season ? " · " + ctx.season : "")
-        : (ctx?.message || "该联赛暂无积分接口");
+        : (ctx?.message || "未覆盖");
 
       document.getElementById("content").innerHTML = `
         <div class="card">
@@ -123,9 +140,8 @@
           </div>
         </div>
 
-        <div class="sec-tabs" id="tabs">
+        <div class="sec-tabs">
           <button type="button" class="sec-tab active" data-sec="odds">赔率区</button>
-          <button type="button" class="sec-tab" data-sec="intel">情报区</button>
           <button type="button" class="sec-tab" data-sec="table">积分区</button>
           <button type="button" class="sec-tab" data-sec="form">战绩区</button>
           <button type="button" class="sec-tab" data-sec="injury">伤停区</button>
@@ -134,115 +150,77 @@
 
         <div class="sec-panel active" id="sec-odds">
           <div class="card">
-            <div class="card-title">赔率区 · 书商均值（联网）</div>
+            <div class="card-title">赔率区</div>
             <table class="odds-table">
-              <thead>
-                <tr><th class="book">公司</th><th>主胜</th><th>平局</th><th>客胜</th><th>让球</th><th>大球</th><th>小球</th></tr>
-              </thead>
+              <thead><tr><th class="book">公司</th><th>主</th><th>平</th><th>客</th><th>让球</th><th>大</th><th>小</th></tr></thead>
               <tbody>
                 <tr>
-                  <td class="book">综合均值</td>
+                  <td class="book">均值</td>
                   <td>${od.home ?? "-"}</td><td>${od.draw ?? "-"}</td><td>${od.away ?? "-"}</td>
                   <td>${ah.line && ah.line !== "-" ? ah.line : "-"}</td>
                   <td>${tt.over ?? "-"}</td><td>${tt.under ?? "-"}</td>
                 </tr>
-                <tr>
-                  <td class="book">让球水位</td>
-                  <td colspan="3" style="color:var(--text-dim)">主 ${ah.home ?? "-"} / 客 ${ah.away ?? "-"}</td>
-                  <td colspan="3" style="color:var(--text-dim)">大小线 ${tt.line || "2.5"}</td>
-                </tr>
               </tbody>
             </table>
-          </div>
-          <div class="card">
-            <div class="card-title">预测比分</div>
-            <div style="font-size:0.9rem">
-              主推 <strong style="font-size:1.2rem;color:var(--primary)">${a.predScore}</strong>
-              （约 ${a.predScoreProb ?? "-"}%）
-              <div style="margin-top:8px;color:var(--text-muted);font-size:0.82rem">备选 ${(a.altScoresText||[]).join(" · ") || "-"}</div>
-              <div style="margin-top:8px;color:var(--primary)">主${a.homeProb}% · 平${a.drawProb}% · 客${a.awayProb}%</div>
+            <div style="margin-top:12px;font-size:0.9rem">
+              预测 <strong style="color:var(--primary)">${a.predScore}</strong>
+              （${a.predScoreProb ?? "-"}%）· 备选 ${(a.altScoresText||[]).join(" · ") || "-"}<br>
+              <span style="color:var(--primary)">主${a.homeProb}% 平${a.drawProb}% 客${a.awayProb}%</span>
             </div>
-          </div>
-        </div>
-
-        <div class="sec-panel" id="sec-intel">
-          <div class="card">
-            <div class="card-title">情报区</div>
-            <div style="font-size:0.88rem;color:var(--text-muted);line-height:1.7">
-              <div>· 联赛：${a.league}</div>
-              <div>· 开赛：${formatKickoff(a.kickoff) || "待定"}</div>
-              <div>· 盘口热度：${m.market_analysis?.heat || "-"} · ${m.market_analysis?.risk_note || ""}</div>
-              <div>· 赔率源：${a.source === "odds-api" ? "The Odds API 实时" : "估算"}</div>
-              <div>· 积分/战绩源：${ctx?.ok ? "TheSportsDB" : "未覆盖该联赛"}</div>
-            </div>
-            <div class="report" style="margin-top:12px">新闻类情报需要专门新闻源，当前未接入爬虫。</div>
           </div>
         </div>
 
         <div class="sec-panel" id="sec-table">
           <div class="card">
             <div class="card-title">积分区</div>
-            ${renderStandTable(stand, (a.league || "") + " 积分榜", ctxNote)}
+            ${renderStandTable(stand, a.league + " 积分榜", ctxNote)}
           </div>
         </div>
 
         <div class="sec-panel" id="sec-form">
           <div class="card">
-            <div class="card-title">战绩区 · ${a.home} 近况</div>
-            ${formDots(formH)}
-            <div class="legend" style="margin-top:8px">
-              <span><i style="background:var(--win)"></i> 胜(红)</span>
-              <span><i style="background:var(--draw)"></i> 平(蓝)</span>
-              <span><i style="background:var(--lose)"></i> 负(灰)</span>
+            <div class="card-title">${a.home} 近期战绩</div>
+            <div class="legend" style="margin-bottom:8px">
+              <span><i style="background:#ef4444"></i> 胜（红）</span>
+              <span><i style="background:#3b82f6"></i> 平（蓝）</span>
+              <span><i style="background:#64748b"></i> 负（灰）</span>
             </div>
-            ${formList(formH)}
+            ${formList(formH, match.home)}
           </div>
           <div class="card">
-            <div class="card-title">战绩区 · ${a.away} 近况</div>
-            ${formDots(formA)}
-            ${formList(formA)}
+            <div class="card-title">${a.away} 近期战绩</div>
+            ${formList(formA, match.away)}
           </div>
           <div class="card">
             <div class="card-title">历史交锋</div>
             ${h2h.length ? h2h.map(h => {
               const scClass = h.result === "draw" ? "draw" : "win";
-              return `<div class="h2h-item">
-                <div class="h2h-score ${scClass}">${h.score}</div>
+              return `<div class="form-match">
+                <div class="form-badge ${scClass}">${h.score}</div>
                 <div style="flex:1">
                   <div>${h.home} vs ${h.away}</div>
                   <div class="h2h-meta">${h.competition} · ${h.date}</div>
                 </div>
               </div>`;
-            }).join("") : `<div class="report">暂无交锋记录（或该联赛往绩未收录）</div>`}
+            }).join("") : `<div class="report">暂无交锋记录<br><span style="font-size:0.8rem">${ctxNote}</span></div>`}
           </div>
         </div>
 
         <div class="sec-panel" id="sec-injury">
           <div class="card">
             <div class="card-title">伤停区</div>
-            <div class="report">
-              伤停/停赛需要 API-Football 等付费或注册源（免费档每日次数很少）。
-              当前未接入，避免用假名单误导。有 Key 后可直接填入此区。
-            </div>
+            <div class="report">伤停需 API-Football 等源，当前未接入，不展示假数据。</div>
           </div>
         </div>
 
         <div class="sec-panel" id="sec-ai">
           <div class="card">
-            <div class="card-title">AI 多维分析</div>
+            <div class="card-title">AI 分析</div>
             <div class="report report-block">${a.report}</div>
-          </div>
-          <div class="card">
-            <div class="card-title">最终建议</div>
-            <div class="report ${a.riskLevel==="low"?"success":a.riskLevel==="high"?"danger":""}">
-              推荐：<strong>${a.pick}</strong> · 风险 ${a.risk}<br>
-              评分 主 ${a.homeScore} / 客 ${a.awayScore}<br>
-              比分 ${a.predScore}${a.predScoreProb?`（${a.predScoreProb}%）`:""}
-            </div>
           </div>
         </div>
 
-        <a class="btn btn-dark" href="matches.html">← 返回比赛列表</a>
+        <a class="btn btn-dark" href="matches.html">← 返回列表</a>
       `;
 
       document.querySelectorAll(".sec-tab").forEach(btn => {
@@ -261,13 +239,13 @@
         try { match = findMatch(JSON.parse(sessionStorage.getItem("fa_matches") || "[]"), gameId); } catch(_){}
       }
       if (!match) {
-        document.getElementById("content").innerHTML = `
-          <div class="card"><div class="report danger">未找到该场比赛</div>
-          <a class="btn btn-primary" href="matches.html">返回列表</a></div>`;
+        document.getElementById("content").innerHTML =
+          `<div class="card"><div class="report danger">未找到比赛</div>
+           <a class="btn btn-primary" href="matches.html">返回</a></div>`;
         return;
       }
-      const a = analyzeMatch(match);
-      const ctx = await loadContext(match.league, match.home, match.away, a.home, a.away);
+      // 必须用英文原名请求 context（TheSportsDB 是英文队名）
+      const ctx = await loadContext(match.league, match.home, match.away);
       render(match, ctx);
     }).catch(err => {
       document.getElementById("content").innerHTML =

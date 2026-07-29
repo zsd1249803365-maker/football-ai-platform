@@ -1,21 +1,25 @@
 /**
- * Football AI fixtures API v5.3
- * The Odds API: h2h + spreads + totals
+ * Football AI fixtures API v6.2
+ * 拉全量联赛赔率 + TheSportsDB 赛程合并，避免比赛过少
  */
 
 const ODDS_SPORTS = [
-  { key: "soccer_usa_mls", name: "美职联" },
-  { key: "soccer_sweden_allsvenskan", name: "瑞典超" },
-  { key: "soccer_norway_eliteserien", name: "挪超" },
-  { key: "soccer_brazil_campeonato", name: "巴甲" },
-  { key: "soccer_japan_j_league", name: "日职" },
-  { key: "soccer_uefa_champs_league", name: "欧冠" },
-  { key: "soccer_uefa_europa_league", name: "欧联" },
   { key: "soccer_epl", name: "英超" },
   { key: "soccer_spain_la_liga", name: "西甲" },
   { key: "soccer_italy_serie_a", name: "意甲" },
   { key: "soccer_germany_bundesliga", name: "德甲" },
   { key: "soccer_france_ligue_one", name: "法甲" },
+  { key: "soccer_usa_mls", name: "美职联" },
+  { key: "soccer_brazil_campeonato", name: "巴甲" },
+  { key: "soccer_sweden_allsvenskan", name: "瑞典超" },
+  { key: "soccer_norway_eliteserien", name: "挪超" },
+  { key: "soccer_japan_j_league", name: "日职" },
+  { key: "soccer_uefa_champs_league", name: "欧冠" },
+  { key: "soccer_uefa_europa_league", name: "欧联" },
+  { key: "soccer_netherlands_eredivisie", name: "荷甲" },
+  { key: "soccer_portugal_primeira_liga", name: "葡超" },
+  { key: "soccer_australia_aleague", name: "澳超" },
+  { key: "soccer_mexico_ligamx", name: "墨超" },
 ];
 
 const TSDB_LEAGUES = [
@@ -26,6 +30,8 @@ const TSDB_LEAGUES = [
   { id: "4334", name: "法甲" },
   { id: "4480", name: "欧冠" },
   { id: "4346", name: "美职联" },
+  { id: "4351", name: "巴甲" },
+  { id: "4337", name: "荷甲" },
 ];
 
 const TSDB = "https://www.thesportsdb.com/api/v1/json/123";
@@ -40,7 +46,7 @@ function getOddsKey() {
 }
 
 async function getJson(url) {
-  const res = await fetch(url, { headers: { "User-Agent": "FootballAI/5.3" } });
+  const res = await fetch(url, { headers: { "User-Agent": "FootballAI/6.2" } });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -141,7 +147,6 @@ function mapWithOdds(home, away, league, kickoff, id, markets, extra = {}) {
   const heatRisk = heat === "高" ? -2 : heat === "中" ? -1 : 0;
   const hasOdds = !!extra.hasOdds;
 
-  // 让球方向粗估：负盘主队让球
   let handicapSupport = 0;
   if (asian.lineNum != null) {
     if (asian.lineNum < 0) handicapSupport = 1;
@@ -161,10 +166,7 @@ function mapWithOdds(home, away, league, kickoff, id, markets, extra = {}) {
     form: {
       home: strengthHome - 4,
       away: strengthAway - 4,
-      detail: {
-        home: hasOdds ? "赔率+盘口推算" : "赛程数据",
-        away: hasOdds ? "赔率+盘口推算" : "赛程数据",
-      },
+      detail: { home: hasOdds ? "赔率推算" : "赛程", away: hasOdds ? "赔率推算" : "赛程" },
     },
     xg: {
       home: +(1.05 + pH * 1.3).toFixed(2),
@@ -187,8 +189,7 @@ function mapWithOdds(home, away, league, kickoff, id, markets, extra = {}) {
     market_analysis: {
       trend: hasOdds ? "真实赔率" : "默认盘口",
       heat,
-      risk_note:
-        heat === "高" ? "热门过热，注意防冷" : heat === "中" ? "热度适中" : "偏冷门方向",
+      risk_note: heat === "高" ? "热门过热" : heat === "中" ? "热度适中" : "偏冷",
     },
     ai_market: {
       odds_change: 0,
@@ -200,16 +201,11 @@ function mapWithOdds(home, away, league, kickoff, id, markets, extra = {}) {
     motivation: { level: "联赛", impact: 2 },
     schedule: { recent_match: "-", fatigue: 0 },
     rotation: { risk: "未知", impact: 0 },
-    style_match: {
-      home_style: "-",
-      away_style: "-",
-      matchup: hasOdds ? "赔率+让球+大小多维" : "综合赛程",
-      impact: 0,
-    },
+    style_match: { home_style: "-", away_style: "-", matchup: "-", impact: 0 },
     market_logic: {
       popular_side: pH > pA ? "主胜" : "客胜",
       cold_side: "平局",
-      bookmaker_signal: hasOdds ? "多家书商平均" : "无",
+      bookmaker_signal: hasOdds ? "多家均值" : "无",
       impact: heatRisk,
     },
     prediction: {
@@ -222,6 +218,11 @@ function mapWithOdds(home, away, league, kickoff, id, markets, extra = {}) {
   };
 }
 
+function pairKey(home, away, kickoff) {
+  const d = String(kickoff || "").slice(0, 10);
+  return `${String(home).toLowerCase()}|${String(away).toLowerCase()}|${d}`;
+}
+
 async function fetchOddsApi(key, leagueFilter) {
   const debug = [];
   const all = [];
@@ -232,7 +233,8 @@ async function fetchOddsApi(key, leagueFilter) {
     );
     if (hit.length) targets = hit;
   }
-  targets = targets.slice(0, leagueFilter ? 3 : 5);
+  // 不再截断到 5，全量请求（控制额度：无筛选时最多 12 个联赛）
+  if (!leagueFilter) targets = targets.slice(0, 12);
 
   for (const sp of targets) {
     try {
@@ -311,9 +313,21 @@ async function fetchSportsDb(leagueFilter) {
   return { matches: all, debug };
 }
 
+function mergeMatches(primary, secondary) {
+  const map = new Map();
+  for (const m of primary) {
+    map.set(pairKey(m.home, m.away, m.kickoff), m);
+  }
+  for (const m of secondary) {
+    const k = pairKey(m.home, m.away, m.kickoff);
+    if (!map.has(k)) map.set(k, m);
+  }
+  return [...map.values()];
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Cache-Control", "s-maxage=180, stale-while-revalidate=600");
+  res.setHeader("Cache-Control", "s-maxage=120, stale-while-revalidate=600");
   if (req.method === "OPTIONS") return res.status(200).end();
 
   const leagueFilter = req.query?.league;
@@ -321,43 +335,42 @@ export default async function handler(req, res) {
   const hasKey = oddsKey.length > 8;
 
   try {
+    let matches = [];
+    let debug = [];
+    let source = "empty";
+    let note = "";
+
     if (hasKey) {
-      const { matches, debug } = await fetchOddsApi(oddsKey, leagueFilter);
-      if (matches.length > 0) {
-        matches.sort((a, b) => String(a.kickoff).localeCompare(String(b.kickoff)));
-        return res.status(200).json({
-          ok: true,
-          count: matches.length,
-          source: "odds-api",
-          hasKey: true,
-          note: "真实赔率：胜平负 + 让球 + 大小球（The Odds API）",
-          updatedAt: new Date().toISOString(),
-          debug,
-          matches,
-        });
+      const odds = await fetchOddsApi(oddsKey, leagueFilter);
+      debug = odds.debug || [];
+      matches = odds.matches || [];
+      if (matches.length) {
+        source = "odds-api";
+        note = "真实赔率（多联赛）";
       }
-      const fb = await fetchSportsDb(leagueFilter);
-      fb.matches.sort((a, b) => String(a.kickoff).localeCompare(String(b.kickoff)));
-      return res.status(200).json({
-        ok: fb.matches.length > 0,
-        count: fb.matches.length,
-        source: fb.matches.length ? "thesportsdb" : "empty",
-        hasKey: true,
-        note: "Key 已配置但暂无开售场次，已回退综合赛程",
-        updatedAt: new Date().toISOString(),
-        debug: [...debug, ...fb.debug],
-        matches: fb.matches,
-      });
     }
 
-    const { matches, debug } = await fetchSportsDb(leagueFilter);
+    // 始终用 TheSportsDB 补赛程，避免场次过少
+    const fb = await fetchSportsDb(leagueFilter);
+    debug = [...debug, ...(fb.debug || [])];
+    if (matches.length) {
+      matches = mergeMatches(matches, fb.matches || []);
+      if ((fb.matches || []).length) note += " + 赛程补全";
+    } else {
+      matches = fb.matches || [];
+      source = matches.length ? "thesportsdb" : "empty";
+      note = hasKey
+        ? "Key 已配置但暂无开售，已用综合赛程"
+        : "未检测到 THE_ODDS_API_KEY，仅综合赛程";
+    }
+
     matches.sort((a, b) => String(a.kickoff).localeCompare(String(b.kickoff)));
     return res.status(200).json({
       ok: matches.length > 0,
       count: matches.length,
-      source: "thesportsdb",
-      hasKey: false,
-      note: "未检测到 THE_ODDS_API_KEY，当前仅综合赛程",
+      source,
+      hasKey,
+      note,
       updatedAt: new Date().toISOString(),
       debug,
       matches,
