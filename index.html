@@ -4,28 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <title>Football AI - 综合赛事分析</title>
-  <link rel="stylesheet" href="css/style.css?v=5.2">
+  <title>Football AI</title>
+  <link rel="stylesheet" href="css/style.css?v=6.0">
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v5.2</span></h1>
-    <p>综合足球赛程 · 真实赔率 · 多维评分分析</p>
+    <h1>⚽ Football AI <span class="version">v6.0</span></h1>
+    <p>赛程 · 盘口 · 多维分析</p>
   </div>
 
   <nav class="nav">
     <a href="index.html" class="active">🏠 首页</a>
     <a href="matches.html">⚽ 比赛</a>
-    <a href="ai-ranking.html">📊 排行榜</a>
     <a href="ai-bet.html">🎫 方案</a>
+    <a href="results.html">📋 赛果</a>
   </nav>
 
   <div class="container">
     <div class="card">
-      <div class="card-title">系统入口</div>
-      <a class="btn btn-primary" href="matches.html">⚽ 比赛列表（按日期）</a>
-      <a class="btn btn-success" href="ai-ranking.html">📊 AI 排行榜</a>
+      <div class="card-title">入口</div>
+      <a class="btn btn-primary" href="matches.html">⚽ 比赛列表（按联赛 / 日期）</a>
       <a class="btn btn-warning" href="ai-bet.html">🎫 分析方案</a>
+      <a class="btn btn-dark" href="results.html">📋 赛果对比（预测 vs 实际）</a>
     </div>
 
     <div class="card">
@@ -35,72 +35,56 @@
     </div>
 
     <div class="card">
-      <div class="card-title">数据概览</div>
-      <div id="statistics" class="loading">正在读取数据...</div>
+      <div class="card-title">今日概览</div>
+      <div id="statistics" class="loading">读取中...</div>
     </div>
 
     <div class="card">
-      <div class="card-title">最近比赛</div>
-      <div id="topGames" class="loading">正在分析...</div>
+      <div class="card-title">即将开赛</div>
+      <div id="topGames" class="loading">加载中...</div>
     </div>
   </div>
 
-  <div class="footer">Football AI v5.2 · 深绿运动风 · 仅供参考</div>
+  <div class="footer">Football AI v6.0 · 仅供参考</div>
 
-  <script src="js/score.js?v=5.2"></script>
+  <script src="js/score.js?v=6.0"></script>
   <script>
-    loadMatches()
-      .then(data => {
-        const byDate = analyzeAllByDate(data);
-        const results = analyzeAll(data);
-        const srcMap = {
-          "odds-api": "🟢 真实赔率（The Odds API）",
-          thesportsdb: "🟡 综合赛程（TheSportsDB）",
-          local: "🟡 本地数据",
-          cache: "🟡 缓存",
-        };
-        const src = srcMap[window.__DATA_SOURCE__] || "🟢 在线数据";
-        document.getElementById("dataStatus").textContent =
-          src + ` · ${results.length} 场`;
-        if (window.__DATA_NOTE__) {
-          document.getElementById("dataNote").textContent = window.__DATA_NOTE__;
-        }
+    loadMatches().then(data => {
+      const byDate = analyzeAllByDate(data || []);
+      const results = analyzeAll(data || []);
+      const srcMap = {
+        "odds-api": "🟢 真实赔率（The Odds API）",
+        thesportsdb: "🟡 综合赛程",
+        local: "🟡 本地", cache: "🟡 缓存",
+      };
+      document.getElementById("dataStatus").textContent =
+        (srcMap[window.__DATA_SOURCE__] || "在线") + ` · ${results.length} 场`;
+      if (window.__DATA_NOTE__) document.getElementById("dataNote").textContent = window.__DATA_NOTE__;
 
-        const homeCount = results.filter(r => r.pickSide === "home").length;
-        const drawCount = results.filter(r => r.pickSide === "draw").length;
-        const awayCount = results.filter(r => r.pickSide === "away").length;
+      document.getElementById("statistics").innerHTML = `
+        <div class="stats-row">
+          <div class="stat-box"><div class="num">${results.length}</div><div class="label">待赛</div></div>
+          <div class="stat-box"><div class="num" style="color:var(--success)">${results.filter(r=>r.pickSide==="home").length}</div><div class="label">倾向主</div></div>
+          <div class="stat-box"><div class="num" style="color:var(--warning)">${results.filter(r=>r.pickSide==="draw").length}</div><div class="label">倾向平</div></div>
+          <div class="stat-box"><div class="num" style="color:var(--danger)">${results.filter(r=>r.pickSide==="away").length}</div><div class="label">倾向客</div></div>
+        </div>`;
 
-        document.getElementById("statistics").innerHTML = `
-          <div class="stats-row">
-            <div class="stat-box"><div class="num">${results.length}</div><div class="label">比赛数</div></div>
-            <div class="stat-box"><div class="num" style="color:var(--success)">${homeCount}</div><div class="label">主队优势</div></div>
-            <div class="stat-box"><div class="num" style="color:var(--warning)">${drawCount}</div><div class="label">平局倾向</div></div>
-            <div class="stat-box"><div class="num" style="color:var(--danger)">${awayCount}</div><div class="label">客队优势</div></div>
-          </div>`;
-
-        let html = "";
-        byDate.slice(0, 10).forEach((g, i) => {
-          const oddsText = g.odds ? `主 ${g.odds.home} / 平 ${g.odds.draw} / 客 ${g.odds.away}` : "";
-          html += `
-            <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
-              <div class="match-name">${i + 1}. ${g.home} vs ${g.away}</div>
-              <div class="match-league">${g.league}${g.kickoff ? " · " + formatKickoff(g.kickoff) : ""}</div>
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px">
-                <span class="badge ${pickBadgeClass(g.pickSide)}">${g.pick}</span>
-                <span class="badge ${riskBadgeClass(g.riskLevel)}">风险${g.risk}</span>
-                <span class="stars">${g.starStr}</span>
-              </div>
-              ${oddsText ? `<div style="font-size:0.8rem;color:var(--text-dim);margin-top:6px;font-variant-numeric:tabular-nums">赔率 ${oddsText}</div>` : ""}
-              <a class="btn btn-dark" href="match-detail.html?game=${encodeURIComponent(g.id)}" style="margin-top:12px;padding:11px">查看详细分析 →</a>
-            </div>`;
-        });
-        document.getElementById("topGames").innerHTML = html || "暂无数据";
-      })
-      .catch(err => {
-        document.getElementById("dataStatus").textContent = "数据加载失败";
-        document.getElementById("statistics").innerHTML = `<div class="report danger">${err.message}</div>`;
-        document.getElementById("topGames").innerHTML = "";
+      let html = "";
+      byDate.slice(0, 8).forEach(g => {
+        html += `<a class="match-row" href="match-detail.html?game=${encodeURIComponent(g.id)}">
+          <div>
+            <div class="teams">${g.home} vs ${g.away}</div>
+            <div class="meta">${g.league}</div>
+          </div>
+          <div class="time">${formatKickoff(g.kickoff) || "待定"} ›</div>
+        </a>`;
       });
+      document.getElementById("topGames").innerHTML = html || "暂无";
+    }).catch(err => {
+      document.getElementById("dataStatus").textContent = "加载失败";
+      document.getElementById("statistics").innerHTML = `<div class="report danger">${err.message}</div>`;
+      document.getElementById("topGames").innerHTML = "";
+    });
   </script>
 </body>
 </html>

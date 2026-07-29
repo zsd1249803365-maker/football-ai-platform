@@ -5,44 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>比赛列表 - Football AI</title>
-  <link rel="stylesheet" href="css/style.css?v=5.3">
-  <style>
-    .odds-box {
-      margin-top: 10px;
-      padding: 10px 12px;
-      background: rgba(10,15,13,0.55);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      line-height: 1.55;
-      font-variant-numeric: tabular-nums;
-    }
-    .odds-row { margin-bottom: 2px; }
-    .odds-prob { color: var(--primary); font-weight: 600; margin-top: 4px; }
-    .list-end {
-      text-align: center;
-      color: var(--text-dim);
-      font-size: 0.82rem;
-      padding: 18px 8px 8px;
-    }
-  </style>
+  <link rel="stylesheet" href="css/style.css?v=6.0">
 </head>
 <body>
   <div class="header">
-    <h1>⚽ Football AI <span class="version">v5.3</span></h1>
-    <p>比赛列表 · 按开赛时间 · 真实赔率</p>
+    <h1>⚽ 比赛 <span class="version">v6.0</span></h1>
+    <p>按联赛筛选 · 点进详情看盘口 / 积分 / 战绩</p>
   </div>
 
   <nav class="nav">
     <a href="index.html">🏠 首页</a>
     <a href="matches.html" class="active">⚽ 比赛</a>
-    <a href="ai-ranking.html">📊 排行榜</a>
     <a href="ai-bet.html">🎫 方案</a>
+    <a href="results.html">📋 赛果</a>
   </nav>
 
   <div class="container">
-    <div class="source-tag" id="sourceTag">数据来源加载中...</div>
+    <div class="source-tag" id="sourceTag">加载中...</div>
 
     <div class="filters" id="leagueFilters">
       <button type="button" class="filter-btn active" data-league="">全部</button>
@@ -53,102 +32,78 @@
       <button type="button" class="filter-btn" data-league="英超">英超</button>
       <button type="button" class="filter-btn" data-league="西甲">西甲</button>
       <button type="button" class="filter-btn" data-league="德甲">德甲</button>
+      <button type="button" class="filter-btn" data-league="意甲">意甲</button>
+      <button type="button" class="filter-btn" data-league="法甲">法甲</button>
     </div>
 
-    <div class="filters" id="riskFilters">
-      <button type="button" class="filter-btn active" data-risk="">全部风险</button>
-      <button type="button" class="filter-btn" data-risk="low">低风险</button>
-      <button type="button" class="filter-btn" data-risk="mid">中风险</button>
-      <button type="button" class="filter-btn" data-risk="high">高风险</button>
+    <div class="card" id="listWrap">
+      <div id="list"><div class="loading">正在加载...</div></div>
     </div>
-
-    <div id="list"><div class="loading">正在加载比赛...</div></div>
   </div>
 
-  <div class="footer">Football AI v5.3 · 仅供参考</div>
+  <div class="footer">Football AI v6.0 · 列表仅显示对阵与时间</div>
 
-  <script src="js/score.js?v=5.3"></script>
+  <script src="js/score.js?v=6.0"></script>
   <script>
     let allResults = [];
     let currentLeague = "";
-    let currentRisk = "";
 
     function render() {
       let list = allResults;
       if (currentLeague) {
         list = list.filter(g => g.league === currentLeague || String(g.league).includes(currentLeague));
       }
-      if (currentRisk) list = list.filter(g => g.riskLevel === currentRisk);
-
       if (!list.length) {
         document.getElementById("list").innerHTML =
-          `<div class="card"><div class="report">暂无符合条件的比赛</div></div>
-           <div class="list-end">— 已显示全部 —</div>`;
+          `<div class="report">暂无比赛</div><div class="list-end">— 结束 —</div>`;
         return;
       }
-
-      let html = "";
+      // 按联赛分组
+      const groups = {};
       list.forEach(g => {
-        html += `
-          <div class="card">
-            <div class="match-name">${g.home} vs ${g.away}</div>
-            <div class="match-league">${g.league}${g.kickoff ? " · " + formatKickoff(g.kickoff) : ""}</div>
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0">
-              <span class="badge ${pickBadgeClass(g.pickSide)}">${g.pick}</span>
-              <span class="badge ${riskBadgeClass(g.riskLevel)}">风险${g.risk}</span>
-              <span class="stars">${g.starStr}</span>
+        const k = g.league || "其他";
+        if (!groups[k]) groups[k] = [];
+        groups[k].push(g);
+      });
+      let html = "";
+      Object.keys(groups).forEach(league => {
+        html += `<div style="font-size:0.78rem;color:var(--primary);font-weight:650;margin:14px 0 6px;letter-spacing:0.04em">${league}</div>`;
+        groups[league].forEach(g => {
+          html += `<a class="match-row" href="match-detail.html?game=${encodeURIComponent(g.id)}">
+            <div style="flex:1;min-width:0">
+              <div class="teams">${g.home} vs ${g.away}</div>
+              <div class="meta">${formatKickoff(g.kickoff) || "时间待定"}</div>
             </div>
-            ${oddsSnippet(g)}
-            <a class="btn btn-dark" href="match-detail.html?game=${encodeURIComponent(g.id)}">查看完整 AI 分析报告</a>
-          </div>`;
+            <div class="arrow">›</div>
+          </a>`;
+        });
       });
       html += `<div class="list-end">— 共 ${list.length} 场，已全部显示 —</div>`;
       document.getElementById("list").innerHTML = html;
     }
 
-    function bindFilters() {
-      document.querySelectorAll("#leagueFilters .filter-btn").forEach(btn => {
-        btn.onclick = () => {
-          document.querySelectorAll("#leagueFilters .filter-btn").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-          currentLeague = btn.dataset.league || "";
-          load(currentLeague);
-        };
-      });
-      document.querySelectorAll("#riskFilters .filter-btn").forEach(btn => {
-        btn.onclick = () => {
-          document.querySelectorAll("#riskFilters .filter-btn").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-          currentRisk = btn.dataset.risk || "";
-          render();
-        };
-      });
-    }
-
     function load(league) {
-      document.getElementById("list").innerHTML = `<div class="loading">正在加载...</div>`;
-      loadMatches(league || undefined)
-        .then(data => {
-          allResults = analyzeAllByDate(data || []);
-          const srcMap = {
-            "odds-api": "🟢 真实赔率（The Odds API）",
-            thesportsdb: "🟡 综合赛程",
-            local: "🟡 本地",
-            cache: "🟡 缓存",
-          };
-          const src = srcMap[window.__DATA_SOURCE__] || "数据";
-          document.getElementById("sourceTag").textContent =
-            src + ` · 共 ${allResults.length} 场 · 按开赛时间排序`;
-          render();
-        })
-        .catch(err => {
-          document.getElementById("list").innerHTML =
-            `<div class="card"><div class="report danger">读取失败：${err.message}</div></div>
-             <div class="list-end">— 加载结束 —</div>`;
-        });
+      document.getElementById("list").innerHTML = `<div class="loading">加载中...</div>`;
+      loadMatches(league || undefined).then(data => {
+        allResults = analyzeAllByDate(data || []);
+        const srcMap = { "odds-api": "🟢 真实赔率", thesportsdb: "🟡 赛程", local: "🟡 本地", cache: "🟡 缓存" };
+        document.getElementById("sourceTag").textContent =
+          (srcMap[window.__DATA_SOURCE__] || "数据") + ` · ${allResults.length} 场 · 点击进入详情`;
+        render();
+      }).catch(err => {
+        document.getElementById("list").innerHTML =
+          `<div class="report danger">${err.message}</div><div class="list-end">— 结束 —</div>`;
+      });
     }
 
-    bindFilters();
+    document.querySelectorAll("#leagueFilters .filter-btn").forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll("#leagueFilters .filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentLeague = btn.dataset.league || "";
+        load(currentLeague);
+      };
+    });
     load("");
   </script>
 </body>
