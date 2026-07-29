@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>比赛列表 - Football AI</title>
-  <link rel="stylesheet" href="css/style.css?v=6.2">
+  <link rel="stylesheet" href="css/style.css?v=6.3">
   <style>
     .date-bar {
       display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 12px;
@@ -25,12 +25,14 @@
       background: var(--primary-glow); border-color: var(--primary-ring); color: var(--primary);
     }
     .date-chip.active .d { color: var(--primary); }
+    /* 禁止列表里出现 loading 动画残留 */
+    #list .loading { display: none; }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>⚽ 比赛 <span class="version">v6.2</span></h1>
-    <p>点日期看当天赛程 · 联赛筛选</p>
+    <h1>⚽ 比赛 <span class="version">v6.3</span></h1>
+    <p>点日期筛选 · 点「全部」看所有</p>
   </div>
 
   <nav class="nav">
@@ -42,9 +44,7 @@
 
   <div class="container">
     <div class="source-tag" id="sourceTag">加载中...</div>
-
     <div class="date-bar" id="dateBar"></div>
-
     <div class="filters" id="leagueFilters">
       <button type="button" class="filter-btn active" data-league="">全部联赛</button>
       <button type="button" class="filter-btn" data-league="英超">英超</button>
@@ -52,34 +52,34 @@
       <button type="button" class="filter-btn" data-league="意甲">意甲</button>
       <button type="button" class="filter-btn" data-league="德甲">德甲</button>
       <button type="button" class="filter-btn" data-league="法甲">法甲</button>
+      <button type="button" class="filter-btn" data-league="欧冠">欧冠</button>
+      <button type="button" class="filter-btn" data-league="欧联">欧联</button>
+      <button type="button" class="filter-btn" data-league="欧协联">欧协联</button>
       <button type="button" class="filter-btn" data-league="美职联">美职联</button>
       <button type="button" class="filter-btn" data-league="巴甲">巴甲</button>
+      <button type="button" class="filter-btn" data-league="芬超">芬超</button>
       <button type="button" class="filter-btn" data-league="挪超">挪超</button>
       <button type="button" class="filter-btn" data-league="瑞典超">瑞典超</button>
     </div>
-
-    <div class="card">
-      <div id="list"><div class="loading">正在加载...</div></div>
+    <div class="card" id="listCard">
+      <div id="list"><div id="loadHint" class="loading">正在加载...</div></div>
     </div>
   </div>
 
-  <div class="footer">Football AI v6.2</div>
+  <div class="footer">Football AI v6.3</div>
 
-  <script src="js/score.js?v=6.2"></script>
+  <script src="js/score.js?v=6.3"></script>
   <script>
     let allResults = [];
     let currentLeague = "";
-    let currentDate = ""; // YYYY-MM-DD or ""
+    let currentDate = "ALL"; // ALL = 全部日期，不要用空字符串被重置
 
     function dateKey(iso) {
       if (!iso) return "";
       try {
         const d = new Date(iso);
         if (isNaN(d.getTime())) return String(iso).slice(0, 10);
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
-        return `${y}-${m}-${day}`;
+        return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
       } catch { return String(iso).slice(0, 10); }
     }
 
@@ -92,47 +92,47 @@
       });
       const keys = Object.keys(counts).sort();
       const bar = document.getElementById("dateBar");
-      if (!keys.length) {
-        bar.innerHTML = "";
-        return;
-      }
-      if (!currentDate || !counts[currentDate]) currentDate = keys[0];
+      if (!keys.length) { bar.innerHTML = ""; return; }
+
+      // 若当前选中的具体日期已不存在，才回退到 ALL
+      if (currentDate !== "ALL" && !counts[currentDate]) currentDate = "ALL";
 
       const week = ["日","一","二","三","四","五","六"];
-      let html = `<button type="button" class="date-chip ${currentDate===""?"active":""}" data-date="">
+      let html = `<button type="button" class="date-chip ${currentDate==="ALL"?"active":""}" data-date="ALL">
         <div class="d">全</div><div class="w">部</div><div class="n">${allResults.length}</div>
       </button>`;
       keys.forEach(k => {
         const d = new Date(k + "T12:00:00");
-        const day = d.getDate();
-        const w = week[d.getDay()];
         html += `<button type="button" class="date-chip ${currentDate===k?"active":""}" data-date="${k}">
-          <div class="d">${day}</div><div class="w">周${w}</div><div class="n">${counts[k]}场</div>
+          <div class="d">${d.getDate()}</div><div class="w">周${week[d.getDay()]}</div><div class="n">${counts[k]}场</div>
         </button>`;
       });
       bar.innerHTML = html;
       bar.querySelectorAll(".date-chip").forEach(btn => {
         btn.onclick = () => {
-          currentDate = btn.dataset.date || "";
-          buildDateBar();
+          currentDate = btn.dataset.date || "ALL";
+          // 只更新选中样式，不要重建时改 currentDate
+          bar.querySelectorAll(".date-chip").forEach(b => b.classList.toggle("active", b.dataset.date === currentDate));
           render();
         };
       });
     }
 
     function render() {
-      let list = allResults;
+      let list = allResults.slice();
       if (currentLeague) {
         list = list.filter(g => g.league === currentLeague || String(g.league).includes(currentLeague));
       }
-      if (currentDate) {
+      if (currentDate && currentDate !== "ALL") {
         list = list.filter(g => dateKey(g.kickoff) === currentDate);
       }
+
+      const box = document.getElementById("list");
       if (!list.length) {
-        document.getElementById("list").innerHTML =
-          `<div class="report">该日/联赛暂无比赛</div><div class="list-end">— 结束 —</div>`;
+        box.innerHTML = `<div class="report">该筛选下暂无比赛</div><div class="list-end">— 共 0 场，已全部显示 —</div>`;
         return;
       }
+
       const groups = {};
       list.forEach(g => {
         const k = g.league || "其他";
@@ -141,7 +141,7 @@
       });
       let html = "";
       Object.keys(groups).forEach(league => {
-        html += `<div style="font-size:0.78rem;color:var(--primary);font-weight:650;margin:14px 0 6px">${league}</div>`;
+        html += `<div style="font-size:0.78rem;color:var(--primary);font-weight:650;margin:14px 0 6px">${league}（${groups[league].length}）</div>`;
         groups[league].forEach(g => {
           html += `<a class="match-row" href="match-detail.html?game=${encodeURIComponent(g.id)}">
             <div style="flex:1;min-width:0">
@@ -152,22 +152,25 @@
           </a>`;
         });
       });
-      html += `<div class="list-end">— 共 ${list.length} 场 —</div>`;
-      document.getElementById("list").innerHTML = html;
+      html += `<div class="list-end">— 共 ${list.length} 场，已全部显示，没有更多了 —</div>`;
+      box.innerHTML = html;
     }
 
-    function load(league) {
-      document.getElementById("list").innerHTML = `<div class="loading">加载中...</div>`;
-      loadMatches(league || undefined).then(data => {
+    function load() {
+      const box = document.getElementById("list");
+      box.innerHTML = `<div class="loading">正在加载全部联赛...</div>`;
+      // 不带 league 参数，一次拉全量
+      loadMatches().then(data => {
         allResults = analyzeAllByDate(data || []);
         const srcMap = { "odds-api": "🟢 真实赔率", thesportsdb: "🟡 赛程", local: "🟡 本地", cache: "🟡 缓存" };
+        const note = window.__DATA_NOTE__ || "";
         document.getElementById("sourceTag").textContent =
-          (srcMap[window.__DATA_SOURCE__] || "数据") + ` · ${allResults.length} 场 · 点日期筛选`;
+          (srcMap[window.__DATA_SOURCE__] || "数据") + ` · ${allResults.length} 场` + (note ? " · " + note : "");
+        currentDate = "ALL";
         buildDateBar();
         render();
       }).catch(err => {
-        document.getElementById("list").innerHTML =
-          `<div class="report danger">${err.message}</div>`;
+        box.innerHTML = `<div class="report danger">${err.message}</div><div class="list-end">— 结束 —</div>`;
       });
     }
 
@@ -176,12 +179,12 @@
         document.querySelectorAll("#leagueFilters .filter-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         currentLeague = btn.dataset.league || "";
-        // 联赛筛选在前端过滤即可（已拉全量），更快
-        if (!allResults.length) load("");
-        else { buildDateBar(); render(); }
+        buildDateBar();
+        render();
       };
     });
-    load("");
+
+    load();
   </script>
 </body>
 </html>
